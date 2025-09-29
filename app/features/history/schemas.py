@@ -22,7 +22,7 @@ class HistoryCreateRequest(BaseModel):
     part: List[str]
     time: int
     test_id: int
-    status: Literal["save", "submit"] = "save"
+    status: Literal["save", "submit"]
     time_left: Optional[int] = 0
 
 

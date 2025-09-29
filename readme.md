@@ -44,34 +44,9 @@ This is a FastAPI-based TOEIC (Test of English for International Communication) 
 ### Development Tools
 - **pipdeptree (2.28.0)** - Display dependency tree (development utility)
 
-## Architecture Insights
-
-### Async-First Design
-The application uses async/await patterns extensively:
-- **aiomysql** for non-blocking database operations
-- **aiohttp** for concurrent HTTP requests
-- **aiosmtplib** for async email sending
-- **google-genai** with async support for AI operations
-
-### Multiple Database Drivers
-Three MySQL connectors suggest different use cases:
+### Database Drivers
 - **mysql-connector-python**: Official driver for standard operations
-- **mysqlclient**: High-performance C-based driver for heavy workloads
-- **aiomysql**: Async operations for concurrent request handling
 
-### AI Integration
-Google Gemini AI integration suggests features like:
-- Automated TOEIC question generation
-- Answer evaluation and scoring
-- Content analysis and recommendations
-- Natural language processing for test content
-
-### Security Focus
-Multiple security layers implemented:
-- JWT tokens for session management
-- bcrypt for password hashing
-- Email validation with DNS verification
-- Cryptographic utilities for data protection
 
 ## Installation Guide
 
@@ -131,26 +106,6 @@ Multiple security layers implemented:
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-## Development Notes
-
-### Performance Considerations
-- Uses async patterns for I/O operations
-- Multiple MySQL drivers for different performance needs
-- Pillow for efficient image processing
-- Connection pooling through async database clients
-
-### Security Best Practices
-- JWT tokens with expiration
-- Password hashing with bcrypt
-- Email validation with DNS checking
-- Environment-based configuration
-
-### AI Integration Features
-The Google Gemini integration likely supports:
-- Intelligent question generation
-- Automated answer evaluation
-- Content difficulty assessment
-- Personalized learning recommendations
 
 ### API Documentation
 Once running, access:
@@ -169,3 +124,35 @@ Once running, access:
 - Development: Use `--reload` flag with uvicorn
 - Production: Use proper ASGI server like Gunicorn with uvicorn workers
 - Database: Consider connection pooling configuration for production loads
+
+# tab API Documentation
+
+## Feature Routers
+
+### 1. Authentication Router (`/auth`)
+**File:** `app/features/auth/router.py`
+**Endpoints:**
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login  
+- `POST /auth/refresh-token` - Refresh JWT token
+- `POST /auth/reset-password` - Reset user password
+- `POST /auth/send-reset-password-otp` - Send password reset OTP
+- `POST /auth/verify-reset-password-otp` - Verify password reset OTP
+
+### 2. History Router (`/history`) 
+**File:** `app/features/history/router.py`
+**Endpoints:**
+- `POST /history` - Create/save history entry
+- `GET /history/save` - Get saved history
+- `GET /history/result/list` - Get history results list
+- `GET /history/result/detail` - Get detailed history results
+
+### 3. Test Router (`/tests`)
+**File:** `app/features/test/router.py`  
+**Endpoints:**
+- `POST /tests/gemini/health` - Check Gemini service health
+- `GET /tests/all` - Get all tests
+- `GET /tests/{id}` - Get specific test by ID
+- `GET /tests/{id}/parts/{part_id}/detail` - Get test part details
+- `POST /tests/gemini/translate/question` - Translate questions using Gemini
+- `POST /tests/gemini/translate/image` - Translate images using Gemini
