@@ -22,6 +22,7 @@ from app.features.history.queries import (
     GET_TITLE_OF_TEST,
     SELECT_COUNT_QUESTION_BY_TEST, 
     select_count_question_by_multiple_part,
+    select_multiple_part_order_by_part_id
 )
 
 
@@ -140,18 +141,23 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                 row = cursor.fetchone()
                 test_name = row.get("title")
                 
+                # Get part info
+                part_order_query = select_multiple_part_order_by_part_id(part_id_list)
+                cursor.execute(part_order_query, (*part_id_list,))
+                part_order_rows = cursor.fetchall()
+                part_order_list = [row.get("part_order") for row in part_order_rows]
+                
                 # Handle question count
                 total_question = 0
                 if test_type == "FullTest":
-                    # FullTest: count toàn bộ câu hỏi theo test_id
+                    # FullTest: Counting all question by test_id
                     cursor.execute(SELECT_COUNT_QUESTION_BY_TEST, (test_id,))
                     row = cursor.fetchone()
                     total_question = row.get("question_by_test_count")
                 elif test_type == "Practice":
-                    # PracticeTest: count theo danh sách part_orders
-                    part_ids = [str(p) for p in part_id_list]
-                    query = select_count_question_by_multiple_part(part_ids)
-                    cursor.execute(query, (test_id, *part_ids))
+                    # PracticeTest: Counting all question by part_ids_string
+                    question_count_query = select_count_question_by_multiple_part(part_id_list)
+                    cursor.execute(question_count_query, (test_id, *part_id_list))
                     row = cursor.fetchone()
                     total_question = row.get("question_by_multiple_part_count")
                 
@@ -170,7 +176,8 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                     "duration": duration,
                     "test_name": test_name,
                     "score": score,
-                    "part_list": part_id_list
+                    "part_id_list": part_id_list,
+                    "part_order_list": part_order_list
                 })
 
         return results
@@ -220,9 +227,8 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             # # PracticeTest: count theo danh sách part_orders
             elif test_type == "Practice":
                 # PracticeTest: count theo danh sách part_orders
-                part_ids = [str(p) for p in part_id_list]
-                query = select_count_question_by_multiple_part(part_ids)
-                cursor.execute(query, (test_id, *part_ids))
+                query = select_count_question_by_multiple_part(part_id_list)
+                cursor.execute(query, (test_id, *part_id_list))
                 row = cursor.fetchone()
                 total_question = row.get("question_by_multiple_part_count")
 
@@ -236,7 +242,7 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             
             total_answer = incorrect_count + correct_count
             no_answer = total_question - total_answer
-            accuracy = (correct_count / total_answer) * 100 if total_answer > 0 else 0
+            accuracy = (correct_count / total_question) * 100 if total_answer > 0 else 0
         
         return {
             "history_id": history_id,
@@ -253,7 +259,7 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             "create_at": create_at,
             "duration": duration,
             "dataprogress": dataprogress,
-            "part_list": part_id_list
+            "part_id_list": part_id_list,
         }
 
     except HTTPException:

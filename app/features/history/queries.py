@@ -55,12 +55,12 @@ def select_count_correct_incorrect_by_answer_id(answer_id_list):
 
 SELECT_CALCULATE_DATAPROGRESS_RESULT_BY_HISTORY_ID = """
     SELECT
-        SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct_count,
-        SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END) AS incorrect_count,
-        SUM(CASE WHEN a.is_correct = 1 AND CAST(k.question_id AS UNSIGNED) BETWEEN 1 AND 100
-                THEN 1 ELSE 0 END) AS correct_listening,
-        SUM(CASE WHEN a.is_correct = 1 AND CAST(k.question_id AS UNSIGNED) >= 101
-                THEN 1 ELSE 0 END) AS correct_reading
+        COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count,
+        COALESCE(SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END), 0) AS incorrect_count,
+        COALESCE(SUM(CASE WHEN a.is_correct = 1 AND CAST(k.question_id AS UNSIGNED) BETWEEN 1 AND 100
+                THEN 1 ELSE 0 END), 0) AS correct_listening,
+        COALESCE(SUM(CASE WHEN a.is_correct = 1 AND CAST(k.question_id AS UNSIGNED) >= 101
+                THEN 1 ELSE 0 END), 0) AS correct_reading
     FROM toeicapp_history h
     JOIN JSON_TABLE(
         JSON_KEYS(h.dataprogress),
@@ -76,7 +76,7 @@ SELECT_CALCULATE_DATAPROGRESS_RESULT_BY_HISTORY_ID = """
 
 SELECT_CALCULATE_CORRECT_ANSWER_BY_HISTORY_ID = """
     SELECT
-        SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct_count
+        COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count
     FROM toeicapp_history h
     JOIN JSON_TABLE(
         JSON_KEYS(h.dataprogress),
@@ -106,9 +106,16 @@ SELECT_COUNT_QUESTION_BY_PART = """
     AND tp.part_id = %s;
 """
 
+def select_multiple_part_order_by_part_id(part_id_list):
+    placeholders = ", ".join(["%s"] * len(part_id_list))
+    return f"""
+        SELECT part_order 
+        FROM toeicapp_part 
+        where id IN ({placeholders});
+    """
 
-def select_count_question_by_multiple_part(part_ids):
-    placeholders = ", ".join(["%s"] * len(part_ids))
+def select_count_question_by_multiple_part(part_id_list):
+    placeholders = ", ".join(["%s"] * len(part_id_list))
     return f"""
         SELECT COUNT(q.id) AS question_by_multiple_part_count
         FROM toeicapp_testpart tp
