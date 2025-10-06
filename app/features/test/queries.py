@@ -28,3 +28,11 @@ UPDATE_EXPLAIN_QUESTION = """
 """
 
 
+SELECT_PART_AUDIO_URL = """
+    SELECT p.audio_url 
+    FROM toeicapp_part p
+    JOIN toeicapp_testpart tp ON p.id = tp.part_id
+    WHERE tp.test_id = %s AND tp.part_id = %s
+"""
+
+
