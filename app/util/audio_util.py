@@ -8,7 +8,7 @@ from typing import Optional
 def get_audio_base_path() -> Path:
     """
     Get the base path for audio files.
-    Expected structure: C:\TOEIC_NEW\DB\media\assets
+    Expected structure: C:\\TOEIC_NEW\\DB\\media\\assets
     """
     # Get the project root (C:\TOEIC_NEW\toeic-fastapi)
     current_file = Path(__file__)
@@ -20,7 +20,7 @@ def get_audio_base_path() -> Path:
     return audio_base_path
 
 
-def resolve_audio_file_path(relative_audio_url: str) -> Optional[Path]:
+def resolve_audio_file_path(relative_audio_url: str) -> Optional[str]:  # Change to str
     """
     Convert relative audio URL to absolute file system path.
     
@@ -28,14 +28,14 @@ def resolve_audio_file_path(relative_audio_url: str) -> Optional[Path]:
         relative_audio_url: URL like "assets/Full_trial_test_-_Batch_1_2025/JIM_s_TOEIC_LC_TEST_05-_Part_1.mp3"
     
     Returns:
-        Absolute Path to the audio file if it exists, None otherwise
+        Absolute path string to the audio file if it exists, None otherwise
     """
     if not relative_audio_url:
         return None
     
     # Remove 'assets/' prefix if present
     if relative_audio_url.startswith('assets/'):
-        relative_path = relative_audio_url[7:]  # Remove 'assets/' prefix
+        relative_path = relative_audio_url[7:]
     else:
         relative_path = relative_audio_url
     
@@ -45,38 +45,6 @@ def resolve_audio_file_path(relative_audio_url: str) -> Optional[Path]:
     
     # Check if file exists
     if full_path.exists() and full_path.is_file():
-        return full_path
+        return str(full_path)
     
     return None
-
-
-def get_audio_url_for_api(part_audio_url: str, test_id: int, part_id: int) -> str:
-    """
-    Generate API URL for audio streaming endpoint.
-    
-    Args:
-        part_audio_url: Original part audio URL from database
-        test_id: Test ID
-        part_id: Part ID
-    
-    Returns:
-        API endpoint URL for streaming the audio
-    """
-    if not part_audio_url:
-        return ""
-    
-    return f"/api/test/{test_id}/parts/{part_id}/audio"
-
-
-def is_audio_file_accessible(relative_audio_url: str) -> bool:
-    """
-    Check if an audio file is accessible given its relative URL.
-    
-    Args:
-        relative_audio_url: URL like "assets/Full_trial_test_-_Batch_1_2025/JIM_s_TOEIC_LC_TEST_05-_Part_1.mp3"
-    
-    Returns:
-        True if file exists and is accessible, False otherwise
-    """
-    file_path = resolve_audio_file_path(relative_audio_url)
-    return file_path is not None

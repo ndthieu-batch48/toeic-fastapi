@@ -54,15 +54,12 @@ async def get_test_detail(id: int):
             
             test_json = json.loads(result_args[1])
             
-            # Transform part_audio_url to use API endpoints
-            if test_json and "part_list" in test_json:
-                for part in test_json["part_list"]:
-                    if "part_audio_url" in part and part["part_audio_url"]:
-                        # Replace file path with API endpoint
-                        part_id = part.get("part_id")
-                        if part_id:
-                            part["part_audio_url"] = f"/api/test/{id}/parts/{part_id}/audio"
-            
+            if not test_json:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail=f"Test detail not found for id {id}"
+                )
+                
             return test_json
     
     except Exception as e:
@@ -88,10 +85,6 @@ async def get_part_detail(id: int, part_id: int):
                     status_code=status.HTTP_404_NOT_FOUND, 
                     detail=f"Part detail not found for test_id {id} and part_id {part_id}"
                 )
-            
-            # Transform part_audio_url to use API endpoint
-            if "part_audio_url" in part_json and part_json["part_audio_url"]:
-                part_json["part_audio_url"] = f"/api/test/{id}/parts/{part_id}/audio"
             
             return part_json
     
@@ -162,46 +155,55 @@ async def translate_image(request: GeminiTranslateImageRequest):
         )
 
 
-@router.get("/{test_id}/part/{part_id}/audio")
-async def get_part_audio(test_id: int, part_id: int):
-    """
-    Stream audio file for a specific test part.
-    
-    Args:
-        test_id: ID of the test
-        part_id: ID of the part
-        
-    Returns:
-        FileResponse with the audio file or 404 if not found
-    """
+@router.get("/{test_id}/part/{part_id}/audio/url")
+async def get_audio_url(test_id: int, part_id: int):
+    """Get the stream URL for audio. Returns null for Parts 5, 6, 7."""
     try:
         with get_db_cursor() as cursor:
-            # Get the part_audio_url from database
             cursor.execute(SELECT_PART_AUDIO_URL, (test_id, part_id))
             row = cursor.fetchone()
             
             if not row or not row.get('audio_url'):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Audio not found for test_id {test_id} and part_id {part_id}"
-                )
+                return {"audio_stream_url": None}
+            
+            # Return the stream URL that points to the stream endpoint
+            stream_url = f"test/{test_id}/part/{part_id}/audio/stream"
+            return {"audio_stream_url": stream_url}
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in get audio URL controller: {str(e)}"
+        )
+
+
+@router.get("/{test_id}/part/{part_id}/audio/stream")
+async def stream_part_audio(test_id: int, part_id: int):
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute(SELECT_PART_AUDIO_URL, (test_id, part_id))
+            row = cursor.fetchone()
+            
+            if not row or not row.get('audio_url'):
+                return None
             
             part_audio_url = row['audio_url']
-            
-            # Resolve the actual file path
             audio_file_path = resolve_audio_file_path(part_audio_url)
             
-            if not audio_file_path:
+            if not audio_file_path or not os.path.exists(audio_file_path):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Audio file not found: {part_audio_url}"
                 )
             
-            # Return the audio file
             return FileResponse(
-                path=str(audio_file_path),
+                path=audio_file_path,
                 media_type="audio/mpeg",
-                filename=audio_file_path.name
+                filename=os.path.basename(audio_file_path),
+                headers={
+                    "Accept-Ranges": "bytes",
+                    "Cache-Control": "public, max-age=3600"
+                }
             )
             
     except HTTPException:
