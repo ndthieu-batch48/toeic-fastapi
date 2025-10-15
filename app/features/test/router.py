@@ -8,7 +8,7 @@ from pathlib import Path
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
 from app.features.test.queries import SELECT_QUESTION_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
-from app.features.test.schemas import (
+from app.features.test.schema.schemas import (
     GeminiTranslateImageRequest, 
     GeminiTranslateQuestionRequest, 
     GeminiTranslateQuestionResponse)
@@ -69,34 +69,6 @@ async def get_test_detail(id: int):
                 "message": "Error in get test detail controller",
                 "error": str(e),
             },
-        )
-
-
-@router.get("/{id}/part/{part_id}/detail")
-async def get_part_detail(id: int, part_id: int):
-    try:
-        with get_db_cursor(dictionary=False) as cursor:
-            result_args = cursor.callproc("SELECT_PART_DETAIL_PROC", [id, part_id, 0])
-            
-            part_json = json.loads(result_args[2])
-            
-            if  part_json is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, 
-                    detail=f"Part detail not found for test_id {id} and part_id {part_id}"
-                )
-            
-            return part_json
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "message": "Error in get part detail controller",
-                "error": str(e)
-            }
         )
 
 

@@ -7,7 +7,6 @@ app/
 │   ├── auth/           # Authentication and User Management
 │   │   ├── __init__.py
 │   │   ├── router.py           # Auth endpoints (login, register, etc.)
-│   │   ├── users.py            # User-related endpoints
 │   │   ├── schemas.py          # Auth/User Pydantic models
 │   │   ├── queries.py          # Database queries for auth/users
 │   │   ├── jwt_helper.py       # JWT token utilities
