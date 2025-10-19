@@ -1,9 +1,8 @@
 import json
 import os
-from fastapi import APIRouter, HTTPException, status
+from typing import List
+from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import FileResponse
-from pathlib import Path
-
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
@@ -11,7 +10,9 @@ from app.features.test.queries import SELECT_QUESTION_BLOCK_JSON_BY_ID, SELECT_P
 from app.features.test.schema.schemas import (
     GeminiTranslateImageRequest, 
     GeminiTranslateQuestionRequest, 
-    GeminiTranslateQuestionResponse)
+    GeminiTranslateQuestionResponse,
+    TestDetailRes,
+    TestSummaryRes)
 from app.features.test.prompt_helper import build_question_translation_prompt
 from app.util.audio_util import resolve_audio_file_path
 
@@ -19,7 +20,7 @@ from app.util.audio_util import resolve_audio_file_path
 router = APIRouter()
 
 
-@router.get("/all")
+@router.get("/all", response_model=List[TestSummaryRes])
 async def get_all_test():
     try:
         with get_db_cursor(dictionary=False) as cursor:
@@ -46,13 +47,24 @@ async def get_all_test():
         )
 
 
-@router.get("/{id}")
-async def get_test_detail(id: int):
-    try:
+
+@router.get("/{id}", response_model=TestDetailRes)
+async def get_test_detail(
+    id: int,
+    part_ids: List[int] = Query(
+        default=[],
+        description="List of part IDs to filter by",
+        example=[1, 2, 3],
+    )
+):
+    try:        
+        # Convert list of integers to comma-separated string for the stored procedure
+        part_id_str = ",".join(map(str, part_ids)) if part_ids and len(part_ids) > 0 else None
+        
         with get_db_cursor(dictionary=False) as cursor:
-            result_args = cursor.callproc("SELECT_TEST_DETAIL_PROC", [id, 0])
+            result_args = cursor.callproc("SELECT_TEST_DETAIL_PROC", [id, part_id_str, 0])
             
-            test_json = json.loads(result_args[1])
+            test_json = json.loads(result_args[2])
             
             if not test_json:
                 raise HTTPException(

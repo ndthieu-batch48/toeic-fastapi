@@ -1,58 +1,60 @@
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SELECT_TEST_DETAIL_PROC`(
+CREATE PROCEDURE `SELECT_TEST_DETAIL_PROC`(
     IN pTEST_ID INT,
+    IN pPART_IDS VARCHAR(255),
     OUT pJSON_RESULT JSON
 )
 BEGIN
+	SET pPART_IDS = REPLACE(pPART_IDS, ' ', '');
+    
     SELECT JSON_OBJECT(
         'part_list', JSON_ARRAYAGG(
             JSON_OBJECT(
-                'part_id', part_id,
-                'part_order', part_order,
-                'part_title', part_title,
-                'part_audio_url', part_audio_url,
-                'media_list', media_list
+                'part_id', p_id,
+                'part_order', p_order,
+                'part_title', p_title,
+                'part_audio_url', p_audio_url,
+                'media_ques_list', media_ques_list
             )
         )
     ) INTO pJSON_RESULT
     FROM (
         SELECT 
-            tmp.part_id,
-            tmp.part_order,
-            tmp.part_title,
-            tmp.part_audio_url,
+            p_id,
+            p_order,
+            p_title,
+            p_audio_url,
             JSON_ARRAYAGG(
                 JSON_OBJECT(
-                    'media_id', media_id,
-                    'media_name', media_name,
-                    'media_paragraph_main', paragrap_main,
-                    'media_audio_script', media_audio_script,
-                    'media_explain_question', media_explain_question,
-                    'media_translate_script', media_translate_script,
-                    'question_list', question_list
+                    'media_ques_id', m_id,
+                    'media_ques_name', m_media_name,
+                    'media_ques_main_para', '', -- m_para_main,
+                    'media_ques_audio_script', m_audio_script,
+                    'media_ques_explain', m_explain_ques,
+                    'media_ques_trans_script', m_trans_script,
+                    'ques_list', ques_list
                 )
-            ) AS media_list
+            ) AS media_ques_list
         FROM (
             SELECT 
-                p.id AS part_id,
-                p.part_order,
-                p.title AS part_title,
-                p.audio_url AS part_audio_url,
-                m.id AS media_id,
-                m.media_name,
-                m.paragrap_main,
-                m.audio_script AS media_audio_script,
-                m.explain_question AS media_explain_question,
-                m.translate_script AS media_translate_script,
+                p.id AS p_id,
+                p.part_order AS p_order,
+                p.title AS p_title,
+                p.audio_url AS p_audio_url,
+                m.id AS m_id,
+                m.media_name AS m_media_name,
+                m.paragrap_main AS m_para_main,
+                m.audio_script AS m_audio_script,
+                m.explain_question AS m_explain_ques,
+                m.translate_script AS m_trans_script,
                 JSON_ARRAYAGG(
                     JSON_OBJECT(
-                        'question_id', q.id,
-                        'question_number', q.question_number,
-                        'question_content', q.content,
-                        'answer_list', (
+                        'ques_id', q.id,
+                        'ques_number', q.question_number,
+                        'ques_content', q.content,
+                        'ans_list', (
                             SELECT JSON_ARRAYAGG(
                                 JSON_OBJECT(
-                                    'answer_id', a.id,
+                                    'ans_id', a.id,
                                     'is_correct', a.is_correct,
                                     'content', a.content
                                 )
@@ -61,15 +63,15 @@ BEGIN
                             WHERE a.question_id = q.id
                         )
                     )
-                ) AS question_list
+                ) AS ques_list
             FROM toeicapp_part p
             JOIN toeicapp_testpart tp ON tp.part_id = p.id
             JOIN toeicapp_question q ON q.part_id = p.id
             JOIN toeicapp_media m ON q.media_group_id = m.id
             WHERE tp.test_id = pTEST_ID
+            AND (pPART_IDS IS NULL OR FIND_IN_SET(tp.part_id, pPART_IDS) > 0)
             GROUP BY p.id, m.id
         ) tmp
-        GROUP BY tmp.part_id, tmp.part_order, tmp.part_title, tmp.part_audio_url
+        GROUP BY tmp.p_id, tmp.p_order, tmp.p_title, tmp.p_audio_url
     ) final;
-END$$
-DELIMITER ;
+END
