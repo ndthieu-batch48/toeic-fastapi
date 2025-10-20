@@ -32,21 +32,22 @@ Once an acronym is added to the table, it becomes **standard** and should be use
 
 > **Note:** This table is actively maintained and updated as the project evolves. All acronyms listed here are approved for use.
 
-| Full Word   | Acronym  | Example Usage                                 |
-| ----------- | -------- | --------------------------------------------- |
-| Question    | `Ques`   | `ques_id`, `ques_content`, `GemTransQuesReq`  |
-| Response    | `Res`    | `GemTransQuesRes`, `TestDetailRes`            |
-| Request     | `Req`    | `GemTransQuesReq`, `CreateUserReq`            |
-| Gemini      | `Gem`    | `GemTransQuesReq`, `gem_client`               |
-| Translate   | `Trans`  | `trans_script`, `media_trans_script`          |
-| Language    | `Lang`   | `lang_id`, `lang_code`                        |
-| Image       | `Img`    | `img_data`, `media_img`                       |
-| Answer      | `Ans`    | `ans_id`, `ans_list`                          |
-| Paragraph   | `Para`   | `para_main`, `media_para_main`                |
-| Progress    | `Prog`   | `user_prog`, `prog_percent`, `prog_tracking`  |
-| Credential  | `Creden` | `user_creden`, `creden_type`, `update_creden` |
-| Description | `Desc`   | `test_desc`, `media_desc`, `part_desc`        |
-| Duration    | `Dura`   | `test_dura`, `session_dura`, `study_dura`     |
+| Full Word   | Acronym   | Example Usage                                 |
+| ----------- | --------- | --------------------------------------------- |
+| Question    | `Ques`    | `ques_id`, `ques_content`, `GemTransQuesReq`  |
+| Response    | `Resp`    | `GeminiTransQuesResp`, `TestDetailResp`       |
+| Request     | `Req`     | `CreateUserReq`                               |
+| Translate   | `Trans`   | `trans_script`, `media_trans_script`          |
+| Language    | `Lang`    | `lang_id`, `lang_code`                        |
+| Image       | `Img`     | `img_data`, `media_img`                       |
+| Answer      | `Ans`     | `ans_id`, `ans_list`                          |
+| Paragraph   | `Parag`   | `parag_main`, `media_parag_main`              |
+| Progress    | `Prog`    | `user_prog`, `prog_percent`, `prog_tracking`  |
+| Credential  | `Creden`  | `user_creden`, `creden_type`, `update_creden` |
+| Description | `Descrip` | `test_descrip`, `media_descrip`               |
+| Duration    | `Dura`    | `test_dura`, `session_dura`, `study_dura`     |
+| Result      | `Res`     | `test_res`, `res_score`, `user_res`           |
+| Option      | `Opt`     | `opt_id`, `ques_opt`, `config_opt`            |
 
 ### **Acronym Application Examples**
 

@@ -1,4 +1,7 @@
-CREATE PROCEDURE `SELECT_TEST_DETAIL_PROC`(
+USE toeicapp;
+
+DELIMITER $$
+CREATE PROCEDURE SELECT_TEST_DETAIL_PROC (
     IN pTEST_ID INT,
     IN pPART_IDS VARCHAR(255),
     OUT pJSON_RESULT JSON
@@ -27,7 +30,7 @@ BEGIN
                 JSON_OBJECT(
                     'media_ques_id', m_id,
                     'media_ques_name', m_media_name,
-                    'media_ques_main_para', '', -- m_para_main,
+                    'media_ques_main_parag', m_parag_main,
                     'media_ques_audio_script', m_audio_script,
                     'media_ques_explain', m_explain_ques,
                     'media_ques_trans_script', m_trans_script,
@@ -42,7 +45,7 @@ BEGIN
                 p.audio_url AS p_audio_url,
                 m.id AS m_id,
                 m.media_name AS m_media_name,
-                m.paragrap_main AS m_para_main,
+                m.paragrap_main AS m_parag_main,
                 m.audio_script AS m_audio_script,
                 m.explain_question AS m_explain_ques,
                 m.translate_script AS m_trans_script,
@@ -75,3 +78,4 @@ BEGIN
         GROUP BY tmp.p_id, tmp.p_order, tmp.p_title, tmp.p_audio_url
     ) final;
 END
+$$ DELIMITER ;

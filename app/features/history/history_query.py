@@ -19,22 +19,52 @@ UPDATE_HISTORY_BY_USER = """
 
 
 SELECT_HISTORY_BY_STATUS = """
-    SELECT * FROM toeicapp_history 
+    SELECT 
+        id, 
+        dataprogress AS dataprog,
+        type, 
+        part AS part_id_list,
+        time AS dura, 
+        test_id,
+        user_id,
+        create_at,
+        status 
+    FROM toeicapp_history 
     WHERE user_id = %s AND test_id = %s AND status = %s 
     ORDER BY create_at DESC 
 """
 
 
 SELECT_SUBMIT_HISTORY_BY_USER = """
-    SELECT * FROM toeicapp_history 
+    SELECT 
+        id, 
+        dataprogress AS dataprog,
+        type, 
+        part AS part_id_list,
+        time AS dura, 
+        test_id,
+        user_id,
+        create_at,
+        status 
+    FROM toeicapp_history 
     WHERE user_id = %s 
     AND status = 'submit'
     ORDER BY create_at DESC
-    LIMIT 5
+    LIMIT 10
 """
 
 SELECT_HISTORY_BY_ID = """
-    SELECT * FROM toeicapp_history 
+    SELECT 
+        id, 
+        dataprogress AS dataprog,
+        type, 
+        part AS part_id_list,
+        time AS dura, 
+        test_id,
+        user_id,
+        create_at,
+        status 
+    FROM toeicapp_history 
     WHERE id = %s
 """
 
@@ -42,8 +72,8 @@ SELECT_HISTORY_BY_ID = """
 GET_TITLE_OF_TEST = "SELECT title FROM toeicapp_test WHERE id = %s"
 
 
-def select_count_correct_incorrect_by_answer_id(answer_id_list):
-    placeholders = ", ".join(["%s"] * len(answer_id_list))
+def select_count_correct_incorrect_by_ans_id(ans_id_list):
+    placeholders = ", ".join(["%s"] * len(ans_id_list))
     return f"""
         SELECT
             SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct_count,
@@ -53,7 +83,7 @@ def select_count_correct_incorrect_by_answer_id(answer_id_list):
     """
 
 
-SELECT_CALCULATE_DATAPROGRESS_RESULT_BY_HISTORY_ID = """
+SELECT_CALCULATE_DATAPROG_RESULT_BY_HISTORY_ID = """
     SELECT
         COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count,
         COALESCE(SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END), 0) AS incorrect_count,
@@ -74,7 +104,7 @@ SELECT_CALCULATE_DATAPROGRESS_RESULT_BY_HISTORY_ID = """
 """
 
 
-SELECT_CALCULATE_CORRECT_ANSWER_BY_HISTORY_ID = """
+SELECT_CALCULATE_CORRECT_ANS_BY_HISTORY_ID = """
     SELECT
         COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count
     FROM toeicapp_history h
@@ -90,34 +120,27 @@ SELECT_CALCULATE_CORRECT_ANSWER_BY_HISTORY_ID = """
 """
 
 
-SELECT_COUNT_QUESTION_BY_TEST = """
-    SELECT count(q.id) AS question_by_test_count
+SELECT_COUNT_QUES_BY_TEST = """
+    SELECT count(q.id) AS ques_by_test_count
     FROM toeicapp_testpart tp
     JOIN toeicapp_question q ON tp.part_id = q.part_id
     WHERE test_id = %s;
 """
 
 
-SELECT_COUNT_QUESTION_BY_PART = """
-    SELECT count(q.id) AS question_by_part_count
-    FROM toeicapp_testpart tp
-    JOIN toeicapp_question q ON tp.part_id = q.part_id
-    WHERE tp.test_id = %s 
-    AND tp.part_id = %s;
-"""
-
 def select_multiple_part_order_by_part_id(part_id_list):
     placeholders = ", ".join(["%s"] * len(part_id_list))
     return f"""
         SELECT part_order 
         FROM toeicapp_part 
-        where id IN ({placeholders});
+        WHERE id IN ({placeholders});
     """
 
-def select_count_question_by_multiple_part(part_id_list):
+
+def select_count_ques_by_multiple_part(part_id_list):
     placeholders = ", ".join(["%s"] * len(part_id_list))
     return f"""
-        SELECT COUNT(q.id) AS question_by_multiple_part_count
+        SELECT COUNT(q.id) AS ques_by_multiple_part_count
         FROM toeicapp_testpart tp
         JOIN toeicapp_part p ON tp.part_id = p.id
         JOIN toeicapp_question q ON tp.part_id = q.part_id

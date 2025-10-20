@@ -6,21 +6,21 @@ from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.features.test.queries import SELECT_QUESTION_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
-from app.features.test.schema.schemas import (
-    GeminiTranslateImageRequest, 
-    GeminiTranslateQuestionRequest, 
-    GeminiTranslateQuestionResponse,
-    TestDetailRes,
-    TestSummaryRes)
-from app.features.test.prompt_helper import build_question_translation_prompt
+from app.features.test.test_query import SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
+from app.features.test.test_schemas import (
+    GeminiTransImgReq, 
+    GeminiTransQuesReq, 
+    GeminiTransQuesResp,
+    TestDetailResp,
+    TestSummaryResp)
+from app.features.test.test_prompt_helper import build_ques_trans_prompt
 from app.util.audio_util import resolve_audio_file_path
 
 
 router = APIRouter()
 
 
-@router.get("/all", response_model=List[TestSummaryRes])
+@router.get("", response_model=List[TestSummaryResp], description="Get all test summaries")
 async def get_all_test():
     try:
         with get_db_cursor(dictionary=False) as cursor:
@@ -47,14 +47,13 @@ async def get_all_test():
         )
 
 
-
-@router.get("/{id}", response_model=TestDetailRes)
+@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a specific TOEIC test, including selected parts and questions")
 async def get_test_detail(
     id: int,
     part_ids: List[int] = Query(
         default=[],
         description="List of part IDs to filter by",
-        example=[1, 2, 3],
+        example=[1, 2, 3]
     )
 ):
     try:        
@@ -73,7 +72,8 @@ async def get_test_detail(
                 )
                 
             return test_json
-    
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,30 +84,34 @@ async def get_test_detail(
         )
 
 
-@router.post("/gemini/translate/question", response_model=GeminiTranslateQuestionResponse)
-async def translate_question(request: GeminiTranslateQuestionRequest):
+@router.post(
+    "/gemini/trans/ques",
+    response_model=GeminiTransQuesResp,
+    description="Translate a TOEIC question to the target language using Gemini AI."
+)
+async def trans_ques(req: GeminiTransQuesReq):
     try:
         with get_db_cursor() as cursor:
-            cursor.execute(SELECT_QUESTION_BLOCK_JSON_BY_ID, (request.question_id,))
+            cursor.execute(SELECT_QUES_BLOCK_JSON_BY_ID, (req.ques_id,))
             row = cursor.fetchone()
-            if not row or not row.get('question_block_json'):
+            if not row or not row.get('ques_block_json'):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Question not found"
                 )
-            question_block_json = row['question_block_json']
+            ques_block_json = row['ques_block_json']
 
-            prompt = build_question_translation_prompt(question_block_json, request.language_id)
-            gemini_response = generate_text_with_gemini(prompt)
-            if not gemini_response:
+            prompt = build_ques_trans_prompt(ques_block_json, req.lang_id)
+            gemini_resp = generate_text_with_gemini(prompt)
+            if not gemini_resp:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Failed to get translation from Gemini"
                 )
             
-            response = json.loads(gemini_response)            
+            resp = json.loads(gemini_resp)            
 
-        return response
+        return resp
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -119,7 +123,7 @@ SELECT_BASE64_IMAGE_BY_ID = """
 select * from toeicapp_media where id = %s
 """
 @router.post("/gemini/translate/image", response_model=dict)
-async def translate_image(request: GeminiTranslateImageRequest):
+async def translate_image(request: GeminiTransImgReq):
     try:
         with get_db_cursor() as cursor:
             cursor.execute(SELECT_BASE64_IMAGE_BY_ID, (request.media_id,))
@@ -151,7 +155,7 @@ async def get_audio_url(test_id: int, part_id: int):
                 return {"audio_stream_url": None}
             
             # Return the stream URL that points to the stream endpoint
-            stream_url = f"test/{test_id}/part/{part_id}/audio/stream"
+            stream_url = f"tests/{test_id}/part/{part_id}/audio/stream"
             return {"audio_stream_url": stream_url}
             
     except Exception as e:

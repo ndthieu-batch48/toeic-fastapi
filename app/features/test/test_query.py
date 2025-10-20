@@ -1,12 +1,12 @@
 """Test related queries"""
 
 
-SELECT_QUESTION_BLOCK_JSON_BY_ID = """
+SELECT_QUES_BLOCK_JSON_BY_ID = """
     SELECT JSON_OBJECT(
-        'question_id', q.id,
-        'question_content', q.content,
-        'answer_list', JSON_ARRAYAGG(a.content)
-    ) AS question_block_json
+        'ques_id', q.id,
+        'ques_content', q.content,
+        'ans_list', JSON_ARRAYAGG(a.content)
+    ) AS ques_block_json
     FROM toeicapp_question q
     JOIN toeicapp_answer a ON a.question_id = q.id
     WHERE q.id = %s
@@ -14,14 +14,14 @@ SELECT_QUESTION_BLOCK_JSON_BY_ID = """
 """
 
 
-UPDATE_TRANSLATE_SCRIPT = """
+UPDATE_TRANS_SCRIPT = """
     UPDATE toeic.toeicapp_media 
     SET translate_script = %s 
     WHERE id = %s
 """
 
 
-UPDATE_EXPLAIN_QUESTION = """
+UPDATE_EXPLAIN_QUES = """
     UPDATE toeic.toeicapp_media
     SET explain_question = %s
     WHERE id = %s

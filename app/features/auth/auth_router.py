@@ -2,12 +2,12 @@ import asyncio
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from .schemas import (
+from .auth_schemas import (
     RegisterRequest, LoginRequest, UserResponse, TokenRequest, TokenResponse,
     ResetPasswordRequest, OtpServiceRequest, VerifyOtpServiceRequest
 )
 from ...core.mysql_connection import get_db_cursor
-from .queries import (
+from .auth_query import (
     SELECT_USER_BY_EMAIL_OR_USERNAME, INSERT_USER, SELECT_USER_BY_ID,
     UPDATE_USER_PASSWORD_BY_ID, DELETE_UNUSED_OTP, INSERT_OTP,
     SELECT_VALID_OTP, UPDATE_USED_OTP
