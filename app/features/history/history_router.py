@@ -25,6 +25,7 @@ from app.features.history.history_query import (
     select_count_ques_by_multiple_part,
     select_multiple_part_order_by_part_id
 )
+from app.features.test.test_const import TEST_TYPE
 
 
 router = APIRouter()
@@ -131,7 +132,7 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
             
             results = []
             for history in submit_history_list:
-                
+
                 # Prepare data
                 history_id = history.get("id")
                 part_id_list = json.loads(history.get("part_id_list"))
@@ -139,35 +140,39 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                 test_type = history.get("type")
                 create_at = history.get("create_at")
                 dura = history.get("dura")
-                
+
                 # Get test info
                 cursor.execute(GET_TITLE_OF_TEST, (test_id,))
                 row = cursor.fetchone()
                 test_name = row.get("title")
-                
-                # Get part info. If user select Full Test, return all parts 
+
+                # Get part info. 
+                # If user selected PRACTICE MODE, get part orders by part_id_list
                 if part_id_list:
                     part_order_query = select_multiple_part_order_by_part_id(part_id_list)
                     cursor.execute(part_order_query, (*part_id_list,))
                     part_order_rows = cursor.fetchall()
                     part_order_list = [row.get("part_order") for row in part_order_rows]
+                
+                # If user selected EXAM MODE, return all parts
                 else:
                     part_order_list = ["Part 1", "Part 2", "Part 3", "Part 4", "Part 5", "Part 6", "Part 7"]
-                
+
                 # Handle question count
                 total_ques = 0
-                # Full Test: Counting all question by test_id
-                if test_type == "FullTest":
+                # EXAM MODE: Counting all question by test_id
+                if test_type == TEST_TYPE.EXAM:
                     cursor.execute(SELECT_COUNT_QUES_BY_TEST, (test_id,))
                     row = cursor.fetchone()
                     total_ques = row.get("ques_by_test_count")
-                elif test_type == "Practice":
-                # Practice Test: Counting all question by part_id_list
+
+                # PRACTICE MODE: Counting all question by part_orders
+                elif test_type == TEST_TYPE.PRACTICE:
                     ques_count_query = select_count_ques_by_multiple_part(part_id_list)
                     cursor.execute(ques_count_query, (test_id, *part_id_list))
                     row = cursor.fetchone()
                     total_ques = row.get("ques_by_multiple_part_count")
-                
+
                 # Handle calculating result
                 cursor.execute(SELECT_CALCULATE_CORRECT_ANS_BY_HISTORY_ID, (history_id,))
                 row = cursor.fetchone()
@@ -224,14 +229,14 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             
             # Handle question count
             total_ques = 0
-            # Full Test: Counting all question by test_id
-            if test_type == "FullTest":
+            # EXAM MODE: Counting all question by test_id
+            if test_type == TEST_TYPE.EXAM:
                 cursor.execute(SELECT_COUNT_QUES_BY_TEST, (test_id,))
                 row = cursor.fetchone()
                 total_ques = row.get("ques_by_test_count")
-            # # Practice Test: count theo danh sách part_orders
-            elif test_type == "Practice":
-                # PracticeTest: Counting all question by part_id_list
+            
+            # PRACTICE MODE: Counting all question by part_orders
+            elif test_type == TEST_TYPE.PRACTICE:
                 ques_count_query = select_count_ques_by_multiple_part(part_id_list)
                 cursor.execute(ques_count_query, (test_id, *part_id_list))
                 row = cursor.fetchone()

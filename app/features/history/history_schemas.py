@@ -2,22 +2,24 @@ from datetime import datetime
 from typing import Dict, List, Literal
 from pydantic import BaseModel, Json
 
+from app.features.test.test_const import TEST_TYPE
+
 
 class HistoryResp(BaseModel):
     id: int
-    dataprog: Json[Dict[str, str]]  # JSON field
-    type: str                           # varchar(20) - "Practice", "FullTest", etc.
-    part_id_list: Json[List[str]]               # JSON field - ["Part 5"]
-    dura: float                          # int field
-    test_id: int                        # bigint field
-    user_id: int                        # bigint field  
-    create_at: datetime                 # datetime field (note: create_at, not created_at)
-    status: str                         # varchar(10) - "submit", etc.
+    dataprog: Json[Dict[str, str]]
+    type: TEST_TYPE
+    part_id_list: Json[List[str]]              
+    dura: float                         
+    test_id: int                        
+    user_id: int                      
+    create_at: datetime 
+    status: Literal["save", "submit"]
 
 
 class HistoryCreateReq(BaseModel):
     dataprog: Dict[str, str]
-    type: Literal["Practice", "FullTest"]
+    type: TEST_TYPE
     part_id_list: List[str]
     dura: float
     test_id: int
@@ -32,7 +34,7 @@ class HistoryCreateResp(BaseModel):
 class HistoryResultDetailResp(BaseModel):
     history_id: int
     test_id: int
-    test_type: str
+    test_type: TEST_TYPE
     test_name: str
     correct_count: int
     incorrect_count: int
@@ -51,7 +53,7 @@ class HitoryResultListResp(BaseModel):
     history_id: int
     score: str
     test_id: int 
-    test_type: str
+    test_type: TEST_TYPE
     test_name: str
     dura: int
     part_id_list: List[str]

@@ -14,7 +14,7 @@ from app.features.test.test_schemas import (
     TestDetailResp,
     TestSummaryResp)
 from app.features.test.test_prompt_helper import build_ques_trans_prompt
-from app.util.audio_util import resolve_audio_file_path
+from app.features.test.test_audio_util import resolve_audio_file_path
 
 
 router = APIRouter()
@@ -47,23 +47,14 @@ async def get_all_test():
         )
 
 
-@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a specific TOEIC test, including selected parts and questions")
-async def get_test_detail(
-    id: int,
-    part_ids: List[int] = Query(
-        default=[],
-        description="List of part IDs to filter by",
-        example=[1, 2, 3]
-    )
-):
+@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a specific TOEIC test")
+async def get_test_detail(id: int):
     try:        
-        # Convert list of integers to comma-separated string for the stored procedure
-        part_id_str = ",".join(map(str, part_ids)) if part_ids and len(part_ids) > 0 else None
-        
+        # Convert list of integers to comma-separated string for the stored procedure        
         with get_db_cursor(dictionary=False) as cursor:
-            result_args = cursor.callproc("SELECT_TEST_DETAIL_PROC", [id, part_id_str, 0])
+            result_args = cursor.callproc("SELECT_TEST_DETAIL_PROC", [id, 0])
             
-            test_json = json.loads(result_args[2])
+            test_json = json.loads(result_args[1])
             
             if not test_json:
                 raise HTTPException(

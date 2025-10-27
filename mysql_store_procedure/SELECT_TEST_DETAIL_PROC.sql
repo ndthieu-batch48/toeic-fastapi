@@ -3,12 +3,10 @@ USE toeicapp;
 DELIMITER $$
 CREATE PROCEDURE SELECT_TEST_DETAIL_PROC (
     IN pTEST_ID INT,
-    IN pPART_IDS VARCHAR(255),
     OUT pJSON_RESULT JSON
 )
 BEGIN
-	SET pPART_IDS = REPLACE(pPART_IDS, ' ', '');
-    
+
     SELECT JSON_OBJECT(
         'part_list', JSON_ARRAYAGG(
             JSON_OBJECT(
@@ -72,7 +70,6 @@ BEGIN
             JOIN toeicapp_question q ON q.part_id = p.id
             JOIN toeicapp_media m ON q.media_group_id = m.id
             WHERE tp.test_id = pTEST_ID
-            AND (pPART_IDS IS NULL OR FIND_IN_SET(tp.part_id, pPART_IDS) > 0)
             GROUP BY p.id, m.id
         ) tmp
         GROUP BY tmp.p_id, tmp.p_order, tmp.p_title, tmp.p_audio_url
