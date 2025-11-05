@@ -1,3 +1,4 @@
+from typing import Dict
 from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
@@ -93,7 +94,32 @@ class GeminiTransImgReq(BaseModel):
         return v
 
 
+class GeminiExplainQuesReq(BaseModel):
+    ques_id: int
+    lang_id: LangCode
+    
+    @field_validator('lang_id')
+    @classmethod
+    def validate_lang_id(cls, v):
+        if v not in LANG_MAP:
+            raise ValueError(f'Invalid language code. Must be one of: {list(LANG_MAP.keys())}')
+        return v
 
+
+class GeminiExplainQuesResp(BaseModel):
+    ques_id: int
+    ques_ask: str
+    ques_need: str
+    correct_ans_reason: str
+    incorrect_ans_reason: Dict[str, str]
+    lang_id: str
+    
+    @field_validator('lang_id')
+    @classmethod
+    def validate_lang_id(cls, v):
+        if v not in LANG_MAP:
+            raise ValueError(f'Invalid language code. Must be one of: {list(LANG_MAP.keys())}')
+        return v
 
 
 

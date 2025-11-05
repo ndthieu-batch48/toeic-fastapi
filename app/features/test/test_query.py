@@ -13,6 +13,22 @@ SELECT_QUES_BLOCK_JSON_BY_ID = """
     GROUP BY q.id, q.content;
 """
 
+SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID = """
+    SELECT JSON_OBJECT(
+        'ques_id', q.id,
+        'ques_content', q.content,
+        'ans_list', JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'ans_content', a.content,
+                'is_correct', a.is_correct
+            )
+        )
+    ) AS ques_explain_block_json
+    FROM toeicapp_question q
+    JOIN toeicapp_answer a ON a.question_id = q.id
+    WHERE q.id = %s
+    GROUP BY q.id, q.content;
+"""
 
 UPDATE_TRANS_SCRIPT = """
     UPDATE toeic.toeicapp_media 

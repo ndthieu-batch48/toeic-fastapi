@@ -6,14 +6,16 @@ from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.features.test.test_query import SELECT_BASE64_IMAGE_BY_TEST_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
+from app.features.test.test_query import SELECT_BASE64_IMAGE_BY_TEST_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
 from app.features.test.test_schemas import (
+    GeminiExplainQuesReq,
+    GeminiExplainQuesResp,
     GeminiTransImgReq, 
     GeminiTransQuesReq, 
     GeminiTransQuesResp,
     TestDetailResp,
     TestSummaryResp)
-from app.features.test.test_prompt_helper import build_ques_trans_prompt
+from app.features.test.test_prompt_helper import build_ques_explain_prompt, build_ques_trans_prompt
 from app.features.test.test_audio_util import resolve_audio_file_path
 
 
@@ -74,62 +76,6 @@ async def get_test_detail(id: int):
         )
 
 
-@router.post(
-    "/gemini/trans/ques",
-    response_model=GeminiTransQuesResp,
-    description="Translate a TOEIC question to the target language using Gemini AI."
-)
-async def trans_ques(req: GeminiTransQuesReq):
-    try:
-        with get_db_cursor() as cursor:
-            cursor.execute(SELECT_QUES_BLOCK_JSON_BY_ID, (req.ques_id,))
-            row = cursor.fetchone()
-            if not row or not row.get('ques_block_json'):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Question not found"
-                )
-            ques_block_json = row['ques_block_json']
-
-            prompt = build_ques_trans_prompt(ques_block_json, req.lang_id)
-            gemini_resp = generate_text_with_gemini(prompt)
-            if not gemini_resp:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to get translation from Gemini"
-                )
-            
-            resp = json.loads(gemini_resp)            
-
-        return resp
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in translate question controller: {str(e)}"
-        )
-
-
-@router.post("/gemini/translate/image", response_model=dict)
-async def translate_image(request: GeminiTransImgReq):
-    try:
-        with get_db_cursor() as cursor:
-            cursor.execute(SELECT_BASE64_IMAGE_BY_TEST_ID, (request.media_id,))
-            row = cursor.fetchone()
-            if not row or not row.get('paragrap_main'):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Image not found"
-                )
-            img = row['paragrap_main']
-
-            return  {"img": img}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in translate question controller: {str(e)}"
-        )
-
-
 @router.get("/{test_id}/part/{part_id}/audio/url")
 async def get_audio_url(test_id: int, part_id: int):
     """Get the stream URL for audio. Returns null for Parts 5, 6, 7."""
@@ -187,4 +133,95 @@ async def stream_part_audio(test_id: int, part_id: int):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error in get part audio controller: {str(e)}"
+        )
+
+
+@router.post(
+    "/gemini/trans/ques",
+    response_model=GeminiTransQuesResp,
+    description="Translate a TOEIC question to the target language using Gemini AI."
+)
+async def trans_ques(req: GeminiTransQuesReq):
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute(SELECT_QUES_BLOCK_JSON_BY_ID, (req.ques_id,))
+            row = cursor.fetchone()
+            if not row or not row.get('ques_block_json'):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Question not found"
+                )
+            ques_block_json = row['ques_block_json']
+
+            prompt = build_ques_trans_prompt(ques_block_json, req.lang_id)
+            gemini_resp = generate_text_with_gemini(prompt)
+            if not gemini_resp:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to get translation from Gemini"
+                )
+            
+            resp = json.loads(gemini_resp)            
+
+        return resp
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in translate question controller: {str(e)}"
+        )
+
+
+@router.post("/gemini/translate/image", response_model=dict)
+async def translate_image(request: GeminiTransImgReq):
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute(SELECT_BASE64_IMAGE_BY_TEST_ID, (request.media_id,))
+            row = cursor.fetchone()
+            if not row or not row.get('paragrap_main'):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Image not found"
+                )
+            img = row['paragrap_main']
+
+            return  {"img": img}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in translate question controller: {str(e)}"
+        )
+
+
+@router.post(
+    "/gemini/explain/ques",
+    response_model=GeminiExplainQuesResp,
+    description="Explain a TOEIC question to the target language using Gemini AI."
+)
+async def explain_ques(req: GeminiExplainQuesReq):
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute(SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID, (req.ques_id,))
+            row = cursor.fetchone()
+            if not row or not row.get('ques_explain_block_json'):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Question not found"
+                )
+            ques_explain_block_json = row['ques_explain_block_json']
+
+            prompt = build_ques_explain_prompt(ques_explain_block_json, req.lang_id)
+            gemini_resp = generate_text_with_gemini(prompt)
+            if not gemini_resp:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to get translation from Gemini"
+                )
+            
+            resp = json.loads(gemini_resp)            
+
+        return resp
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in translate question controller: {str(e)}"
         )

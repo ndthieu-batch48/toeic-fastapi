@@ -52,3 +52,55 @@ def build_ques_trans_prompt(ques_block_json, lang_id):
     Input: {ques_block_json}
     """
     return prompt
+
+
+def build_ques_explain_prompt(ques_explain_block_json, lang_id):
+    target_lang = getLangById(lang_id)
+    
+    prompt = f"""
+    You are an educational reasoning generator.
+    You are given a JSON input with the following structure:
+    {{
+    "ques_id": <number>,
+    "ques_content": "<string>",
+    "ans_list": [
+        {{ "is_correct": <0 or 1>, "ans_content": "<string>" }},
+        ...
+    ],
+    "lang_id": <number>
+    }}
+
+    YOUR TASKS:
+    Given the JSON input below, analyze the question (“ques_content”) and provide concise explanations for:
+    - What the question is asking for.
+    - What the question means or focuses on.
+    - Why the correct answer(s) is/are correct.
+    - Why the incorrect answer(s) are wrong.
+
+    Then, translate all explanations into {target_lang}.
+
+    After all the tasks, add a new field named "lang_id" with the value of "{lang_id}" to the top level of the JSON object.
+    Return the result in the following JSON format:
+
+    {{
+    "lang_id": <same lang_id>,
+    "ques_id": <same ques_id>,
+    "ques_need": "<translated explanation of what the question needs>",
+    "ques_ask": "<translated explanation of what the question asks>",
+    "correct_ans_reason": "<translated explanation why the correct answer is correct>",
+    "incorrect_ans_reason": {{
+        "<answer_label>": "<translated reason why this option is incorrect>",
+        ...
+    }}
+    }}
+
+    Additional requirements:
+    - **STRICTLY AND ONLY return a single, valid, raw JSON object.**
+    - **DO NOT include any Markdown formatting, code blocks (e.g., ```json or ```), comments, or surrounding text outside of the JSON object.**
+    - Keep the original answer labels exactly as they appear in the input (e.g., "A. John Trizz.").
+    - Do not mention missing data or make meta observations.
+    - The response must start with '{{' and end with '}}'.
+
+    Input: {ques_explain_block_json}
+    """
+    return prompt
