@@ -1,12 +1,12 @@
 import json
 import os
 from typing import List
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.features.test.test_query import SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
+from app.features.test.test_query import SELECT_BASE64_IMAGE_BY_TEST_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL
 from app.features.test.test_schemas import (
     GeminiTransImgReq, 
     GeminiTransQuesReq, 
@@ -47,10 +47,9 @@ async def get_all_test():
         )
 
 
-@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a specific TOEIC test")
+@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a TOEIC test")
 async def get_test_detail(id: int):
     try:        
-        # Convert list of integers to comma-separated string for the stored procedure        
         with get_db_cursor(dictionary=False) as cursor:
             result_args = cursor.callproc("SELECT_TEST_DETAIL_PROC", [id, 0])
             
@@ -110,14 +109,11 @@ async def trans_ques(req: GeminiTransQuesReq):
         )
 
 
-SELECT_BASE64_IMAGE_BY_ID = """
-select * from toeicapp_media where id = %s
-"""
 @router.post("/gemini/translate/image", response_model=dict)
 async def translate_image(request: GeminiTransImgReq):
     try:
         with get_db_cursor() as cursor:
-            cursor.execute(SELECT_BASE64_IMAGE_BY_ID, (request.media_id,))
+            cursor.execute(SELECT_BASE64_IMAGE_BY_TEST_ID, (request.media_id,))
             row = cursor.fetchone()
             if not row or not row.get('paragrap_main'):
                 raise HTTPException(

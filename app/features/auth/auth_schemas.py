@@ -1,6 +1,20 @@
+from enum import Enum
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
+
+
+class CredentialType(str, Enum):
+    EMAIL = "email"
+    PHONE = "phone"
+
+
+class OtpPurpose(str, Enum):
+    RESET_PASSWORD = "reset_password"
+    VERIFY_ACCOUNT = "verify_account"
+    VERIFY_EMAIL = "verify_email"
+    VERIFY_PHONE = "verify_phone"
+    TWO_FACTOR_AUTH = "two_factor_auth"
 
 
 class UserRequestBase(BaseModel):
@@ -8,8 +22,24 @@ class UserRequestBase(BaseModel):
     email: EmailStr
 
 
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    role: str
+    date_joined: datetime = datetime.now()
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: Optional[str] = None
+
+
 class RegisterRequest(UserRequestBase):
     password: str
+
+
+class RegisterResponse(BaseModel):
+  message: str
+  user: UserResponse
 
 
 class LoginRequest(BaseModel):
@@ -24,17 +54,6 @@ class LoginRequest(BaseModel):
         return v.strip()
 
 
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    role: str
-    date_joined: datetime = datetime.now()
-    access_token: Optional[str] = None
-    refresh_token: Optional[str] = None
-    token_type: Optional[str] = None
-
-
 class TokenRequest(BaseModel):
     token: str
 
@@ -43,12 +62,6 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
-
-
-class AccessTokenRequest(BaseModel):
-    sub: str 
-    user_id: str
-    role: str
 
 
 class RefreshTokenRequest(BaseModel):
@@ -64,11 +77,11 @@ class ResetPasswordRequest(BaseModel):
 
 
 class OtpServiceRequest(BaseModel):
-    credential_value: str
-    credential_type: str
-    purpose: str
+    credential: str
+    credential_type: CredentialType
+    purpose: OtpPurpose              
 
-    @field_validator("credential_value")
+    @field_validator("credential")
     @classmethod
     def validate_credential(cls, v: str) -> str:
         if not isinstance(v, str):
@@ -80,4 +93,47 @@ class OtpServiceRequest(BaseModel):
 
 class VerifyOtpServiceRequest(BaseModel):
     otp: str
-    purpose: str
+    purpose: OtpPurpose
+
+
+class OtpServiceResponse(BaseModel):
+    success: bool
+    message: str
+    email_sent: bool
+    expires_in_minutes: int
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "message": "OTP has been sent to your email",
+                "email_sent": True,
+                "expires_in_minutes": 5
+            }
+        }
+
+
+class VerifyOtpServiceResponse(BaseModel):
+    success: bool
+    token: str
+    message: str
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "message": "OTP verified successfully"
+            }
+        }
+
+
+class ResetPasswordResponse(BaseModel):
+    message: str
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Password reset successfully"
+            }
+        }

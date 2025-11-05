@@ -15,12 +15,6 @@ SELECT_USER_BY_ID = """
     WHERE id = %s
 """
 
-UPDATE_USER_PASSWORD_BY_ID = """ 
-  UPDATE toeicapp_user 
-  SET password = %s
-  WHERE id = %s
-"""
-
 
 UPDATE_USER_IS_VERIFIED = """
     UPDATE TABLE toeicapp_user
@@ -29,29 +23,43 @@ UPDATE_USER_IS_VERIFIED = """
 """
 
 
-INSERT_OTP = """
-    INSERT INTO toeicapp_otp 
-    (otp, purpose, expires_at, credential_type, credential_value, user_id)
-    VALUES (%s, %s, %s, %s, %s, %s);
+UPDATE_USER_OTP = """
+    UPDATE toeicapp_user 
+    SET otp = %s, 
+        otp_purpose = %s, 
+        otp_is_used = 0,
+        otp_expire_at = %s,
+        otp_created_at = NOW()
+    WHERE id = %s;
 """
 
-SELECT_VALID_OTP = """
-    SELECT * FROM toeicapp_otp 
+
+SELECT_VALID_USER_OTP = """
+    SELECT * FROM toeicapp_user 
     WHERE otp = %s 
-    AND purpose = %s 
-    AND is_used = 0 
-    AND expires_at > NOW();
+    AND otp_purpose = %s 
+    AND otp_is_used = 0 
+    AND otp_expire_at > NOW();
 """
 
-UPDATE_USED_OTP = """
-    UPDATE toeicapp_otp
-    SET is_used = 1 
-    WHERE user_id = %s AND otp = %s AND purpose = %s;
+
+# Delete OTP from user (set to NULL)
+CLEAR_USER_OTP = """
+    UPDATE toeicapp_user
+    SET otp = NULL,
+        otp_purpose = NULL,
+        otp_is_used = NULL,
+        otp_expire_at = NULL,
+        otp_created_at = NULL
+    WHERE id = %s;
 """
 
-DELETE_UNUSED_OTP = """
-    DELETE FROM toeicapp_otp 
-    WHERE user_id = %s AND purpose = %s AND is_used = 0;
+
+UPDATE_USER_PASSWORD_BY_ID = """ 
+    UPDATE toeicapp_user 
+    SET password = %s
+    WHERE id = %s
 """
+
 
 

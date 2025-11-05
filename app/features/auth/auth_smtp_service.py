@@ -33,7 +33,7 @@ def build_password_reset_email(to_email: str, otp: str, expiry_minutes: str) -> 
     sender = smtp_config.GMAIL_SENDER
     
     msg = EmailMessage()
-    msg["From"] = f"TMA TOEIC <{sender}>"
+    msg["From"] = f"TMA English practice <{sender}>"
     msg["To"] = to_email
     msg["Subject"] = PASSWORD_RESET_SUBJECT
 
@@ -50,7 +50,7 @@ def build_verify_email_mail(to_email: str, otp: str, expiry_minutes: str) -> Ema
 
     msg = EmailMessage()
     msg["Subject"] = OTP_VERIFY_SUBJECT
-    msg["From"] = f"TMA TOEIC <{smtp_config.GMAIL_SENDER}>"
+    msg["From"] = f"TMA English practice <{smtp_config.GMAIL_SENDER}>"
     msg["To"] = to_email
 
     plain_body = OTP_VERIFY_PLAIN.format(otp=otp, expiry_minutes=expiry_minutes)

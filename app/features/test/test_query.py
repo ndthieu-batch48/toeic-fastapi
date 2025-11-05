@@ -38,3 +38,7 @@ SELECT_PART_AUDIO_URL = """
 """
 
 
+SELECT_BASE64_IMAGE_BY_TEST_ID = """
+select * from toeicapp_media where id = %s
+"""
+
