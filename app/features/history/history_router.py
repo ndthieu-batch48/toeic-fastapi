@@ -86,6 +86,8 @@ async def create_submit_history(
             "message": f"History {req.type} successfully",
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -109,6 +111,8 @@ async def get_save_progress_history(test_id: int, current_user: dict = Depends(g
 
             return save_progress
     
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -192,6 +196,8 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                 })
 
         return results
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

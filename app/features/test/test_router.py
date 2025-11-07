@@ -90,7 +90,8 @@ async def get_audio_url(test_id: int, part_id: int):
             # Return the stream URL that points to the stream endpoint
             stream_url = f"tests/{test_id}/part/{part_id}/audio/stream"
             return {"audio_stream_url": stream_url}
-            
+    except HTTPException:
+        raise        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -164,6 +165,8 @@ async def trans_ques(req: GeminiTransQuesReq):
             resp = json.loads(gemini_resp)            
 
         return resp
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -220,6 +223,8 @@ async def explain_ques(req: GeminiExplainQuesReq):
             resp = json.loads(gemini_resp)            
 
         return resp
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

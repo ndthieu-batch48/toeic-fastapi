@@ -9,13 +9,19 @@ def get_audio_base_path() -> Path:
     """
     Get the base path for audio files.
     Expected structure: C:\\TOEIC_NEW\\DB\\media\\assets
+    Creates the folders if they don't exist.
     """
-    # Get the project root (C:\TOEIC_NEW\toeic-fastapi)
-    current_file = Path(__file__)
-    project_root = current_file.parent.parent.parent
+    # Be explicit about the path
+    audio_base_path = Path("C:/TOEIC_NEW/DB/media/assets")
     
-    # Navigate to C:\TOEIC_NEW\DB\media\assets
-    audio_base_path = project_root.parent / "DB" / "media" / "assets"
+    # Check if path already exists
+    if audio_base_path.exists():
+        print(f"Path already exists: {audio_base_path}")
+    else:
+        print(f"Creating new path: {audio_base_path}")
+        # Create directories if they don't exist
+        audio_base_path.mkdir(parents=True, exist_ok=True)
+        print(f"Path created successfully")
     
     return audio_base_path
 
