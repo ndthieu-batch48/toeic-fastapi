@@ -94,6 +94,18 @@ class GeminiTransImgReq(BaseModel):
         return v
 
 
+class GeminiTransAudioScriptReq(BaseModel):
+    media_id: int
+    lang_id: LangCode
+    
+    @field_validator('lang_id')
+    @classmethod
+    def validate_lang_id(cls, v):
+        if v not in LANG_MAP:
+            raise ValueError(f'Invalid language code. Must be one of: {list(LANG_MAP.keys())}')
+        return v
+
+
 class GeminiExplainQuesReq(BaseModel):
     ques_id: int
     lang_id: LangCode

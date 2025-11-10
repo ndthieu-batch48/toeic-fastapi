@@ -54,7 +54,12 @@ SELECT_PART_AUDIO_URL = """
 """
 
 
-SELECT_BASE64_IMAGE_BY_TEST_ID = """
-select * from toeicapp_media where id = %s
+SELECT_BASE64_IMAGE_BY_MEDIA_ID = """
+SELECT paragrap_main FROM toeicapp_media WHERE id = %s
+"""
+
+
+SELECT_AUDIO_SCRIPT_BY_MEDIA_ID = """
+SELECT audio_script FROM toeicapp_media WHERE id = %s
 """
 

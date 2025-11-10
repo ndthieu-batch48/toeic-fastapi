@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.features.test.test_query import SELECT_BASE64_IMAGE_BY_TEST_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
+from app.features.test.test_query import SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, SELECT_BASE64_IMAGE_BY_MEDIA_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
 from app.features.test.test_schemas import (
     GeminiExplainQuesReq,
     GeminiExplainQuesResp,
@@ -178,7 +178,7 @@ async def trans_ques(req: GeminiTransQuesReq):
 async def translate_image(request: GeminiTransImgReq):
     try:
         with get_db_cursor() as cursor:
-            cursor.execute(SELECT_BASE64_IMAGE_BY_TEST_ID, (request.media_id,))
+            cursor.execute(SELECT_BASE64_IMAGE_BY_MEDIA_ID, (request.media_id,))
             row = cursor.fetchone()
             if not row or not row.get('paragrap_main'):
                 raise HTTPException(
@@ -191,7 +191,28 @@ async def translate_image(request: GeminiTransImgReq):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in translate question controller: {str(e)}"
+            detail=f"Error in translate image controller: {str(e)}"
+        )
+
+
+@router.post("/gemini/translate/audio-script", response_model=dict)
+async def translate_audio_script(request: GeminiTransImgReq):
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute(SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, (request.media_id,))
+            row = cursor.fetchone()
+            if not row or not row.get('audio_script'):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Audio script not found"
+                )
+            script = row['audio_script']
+
+            return  {"script": script}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in translate audio script controller: {str(e)}"
         )
 
 
