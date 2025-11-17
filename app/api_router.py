@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
 
-from app.features.auth.auth_router import router as auth_router
-from app.features.history.history_router import router as history_router
-from app.features.test.test_router import router as test_router
+from app.feature.auth.auth_router import router as auth_router
+from app.feature.history.history_router import router as history_router
+from app.feature.test.test_router import router as test_router
 
 
 api_router = APIRouter()

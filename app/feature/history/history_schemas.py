@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, List, Literal
 from pydantic import BaseModel, Json
 
-from app.features.test.test_const import TEST_TYPE
+from app.feature.test.test_const import TEST_TYPE
 
 
 class HistoryResp(BaseModel):

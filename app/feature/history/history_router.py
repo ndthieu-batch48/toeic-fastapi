@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 
 
-from app.features.history.history_schemas import (
+from app.feature.history.history_schemas import (
     HistoryCreateResp,
     HistoryResp, 
     HistoryCreateReq, 
@@ -11,8 +11,8 @@ from app.features.history.history_schemas import (
     HitoryResultListResp
 )
 from app.core.mysql_connection import get_db_cursor
-from app.features.auth.auth_dependencies import get_current_user
-from app.features.history.history_query import (
+from app.feature.auth.auth_dependencies import get_current_user
+from app.feature.history.history_query import (
     INSERT_HISTORY,
     UPDATE_HISTORY_BY_USER,
     SELECT_HISTORY_BY_ID, 
@@ -25,7 +25,7 @@ from app.features.history.history_query import (
     select_count_ques_by_multiple_part,
     select_multiple_part_order_by_part_id
 )
-from app.features.test.test_const import TEST_TYPE
+from app.feature.test.test_const import TEST_TYPE
 
 
 router = APIRouter()

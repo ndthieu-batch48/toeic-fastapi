@@ -6,8 +6,8 @@ from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.features.test.test_query import SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, SELECT_BASE64_IMAGE_BY_MEDIA_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
-from app.features.test.test_schemas import (
+from app.feature.test.test_query import SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, SELECT_BASE64_IMAGE_BY_MEDIA_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
+from app.feature.test.test_schemas import (
     GeminiExplainQuesReq,
     GeminiExplainQuesResp,
     GeminiTransImgReq, 
@@ -15,8 +15,8 @@ from app.features.test.test_schemas import (
     GeminiTransQuesResp,
     TestDetailResp,
     TestSummaryResp)
-from app.features.test.test_prompt_helper import build_ques_explain_prompt, build_ques_trans_prompt
-from app.features.test.test_audio_util import resolve_audio_file_path
+from app.feature.test.test_prompt_helper import build_ques_explain_prompt, build_ques_trans_prompt
+from app.feature.test.test_audio_util import resolve_audio_file_path
 
 
 router = APIRouter()
