@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import APIRouter, HTTPException, status
 
-from .auth_schemas import (
+from .auth_schema import (
     OtpPurpose, 
     OtpServiceRequest, 
     OtpServiceResponse, 

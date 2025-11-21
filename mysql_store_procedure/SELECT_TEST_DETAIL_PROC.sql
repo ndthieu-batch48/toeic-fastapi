@@ -1,6 +1,5 @@
 USE toeic;
 
-DELIMITER $$
 CREATE PROCEDURE SELECT_TEST_DETAIL_PROC (
     IN pTEST_ID INT,
     OUT pJSON_RESULT JSON
@@ -14,7 +13,7 @@ BEGIN
                 'part_order', p_order,
                 'part_title', p_title,
                 'part_audio_url', p_audio_url,
-                'media_ques_list', media_ques_list
+                'media_question_list', media_question_list
             )
         )
     ) INTO pJSON_RESULT
@@ -26,15 +25,13 @@ BEGIN
             p_audio_url,
             JSON_ARRAYAGG(
                 JSON_OBJECT(
-                    'media_ques_id', m_id,
-                    'media_ques_name', m_media_name,
-                    'media_ques_main_parag', m_parag_main,
-                    'media_ques_audio_script', m_audio_script,
-                    'media_ques_explain', m_explain_ques,
-                    'media_ques_trans_script', m_trans_script,
-                    'ques_list', ques_list
+                    'media_question_id', m_id,
+                    'media_question_name', m_media_name,
+                    'media_question_main_paragraph', m_main_paragraph,
+                    'media_question_audio_script', m_audio_script,
+                    'question_list', question_list
                 )
-            ) AS media_ques_list
+            ) AS media_question_list
         FROM (
             SELECT 
                 p.id AS p_id,
@@ -43,19 +40,17 @@ BEGIN
                 p.audio_url AS p_audio_url,
                 m.id AS m_id,
                 m.media_name AS m_media_name,
-                m.paragrap_main AS m_parag_main,
+                m.paragrap_main AS m_main_paragraph,
                 m.audio_script AS m_audio_script,
-                m.explain_question AS m_explain_ques,
-                m.translate_script AS m_trans_script,
                 JSON_ARRAYAGG(
                     JSON_OBJECT(
-                        'ques_id', q.id,
-                        'ques_number', q.question_number,
-                        'ques_content', q.content,
-                        'ans_list', (
+                        'question_id', q.id,
+                        'question_number', q.question_number,
+                        'question_content', q.content,
+                        'answer_list', (
                             SELECT JSON_ARRAYAGG(
                                 JSON_OBJECT(
-                                    'ans_id', a.id,
+                                    'answer_id', a.id,
                                     'is_correct', a.is_correct,
                                     'content', a.content
                                 )
@@ -64,7 +59,7 @@ BEGIN
                             WHERE a.question_id = q.id
                         )
                     )
-                ) AS ques_list
+                ) AS question_list
             FROM toeicapp_part p
             JOIN toeicapp_testpart tp ON tp.part_id = p.id
             JOIN toeicapp_question q ON q.part_id = p.id
@@ -75,4 +70,3 @@ BEGIN
         GROUP BY tmp.p_id, tmp.p_order, tmp.p_title, tmp.p_audio_url
     ) final;
 END
-$$ DELIMITER ;

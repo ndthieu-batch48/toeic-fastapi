@@ -6,23 +6,38 @@ from fastapi.responses import FileResponse
 
 from app.core.gemini_client import generate_text_with_gemini
 from app.core.mysql_connection import get_db_cursor
-from app.feature.test.test_query import SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, SELECT_BASE64_IMAGE_BY_MEDIA_ID, SELECT_QUES_BLOCK_JSON_BY_ID, SELECT_PART_AUDIO_URL, SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID
-from app.feature.test.test_schemas import (
-    GeminiExplainQuesReq,
-    GeminiExplainQuesResp,
-    GeminiTransImgReq, 
-    GeminiTransQuesReq, 
-    GeminiTransQuesResp,
-    TestDetailResp,
-    TestSummaryResp)
-from app.feature.test.test_prompt_helper import build_ques_explain_prompt, build_ques_trans_prompt
+from app.feature.test.test_query import (
+    SELECT_AUDIO_SCRIPT_BY_MEDIA_ID,
+    SELECT_BASE64_IMAGE_BY_MEDIA_ID,
+    SELECT_QUESTION_BLOCK_JSON_BY_ID,
+    SELECT_PART_AUDIO_URL,
+    SELECT_QUESTION_EXPLAIN_BLOCK_JSON_BY_ID,
+    SELECT_QUESTION_TRANSLATE_JSON,
+    SELECT_QUESTION_EXPLAIN_JSON,
+    UPDATE_QUESTION_TRANSLATE_JSON_SCRIPT,
+    UPDATE_QUESTION_EXPLAIN_JSON_SCRIPT,
+)
+from app.feature.test.test_schema import (
+    GeminiExplainQuestionRequest,
+    GeminiExplainQuestionResponse,
+    GeminiTranslateAudioScriptRequest,
+    GeminiTranslateImageRequest, 
+    GeminiTranslateQuestionRequest, 
+    GeminiTranslateQuestionResponse,
+    TestDetailResponse,
+    TestSummaryResponse)
+from app.feature.test.test_prompt_helper import  (
+    build_question_explain_prompt, 
+    build_question_translation_prompt, 
+    clean_gemini_response
+)
 from app.feature.test.test_audio_util import resolve_audio_file_path
 
 
 router = APIRouter()
 
 
-@router.get("", response_model=List[TestSummaryResp], description="Get all test summaries")
+@router.get("", response_model=List[TestSummaryResponse], description="Get all test summaries")
 async def get_all_test():
     try:
         with get_db_cursor(dictionary=False) as cursor:
@@ -49,7 +64,7 @@ async def get_all_test():
         )
 
 
-@router.get("/{id}" , response_model=TestDetailResp, description="Returns detailed information for a TOEIC test")
+@router.get("/{id}" , response_model=TestDetailResponse, description="Returns detailed information for a TOEIC test")
 async def get_test_detail(id: int):
     try:        
         with get_db_cursor(dictionary=False) as cursor:
@@ -138,33 +153,56 @@ async def stream_part_audio(test_id: int, part_id: int):
 
 
 @router.post(
-    "/gemini/trans/ques",
-    response_model=GeminiTransQuesResp,
+    "/gemini/translate/question",
+    response_model=GeminiTranslateQuestionResponse,
     description="Translate a TOEIC question to the target language using Gemini AI."
 )
-async def trans_ques(req: GeminiTransQuesReq):
+async def translate_question(request: GeminiTranslateQuestionRequest):
     try:
         with get_db_cursor() as cursor:
-            cursor.execute(SELECT_QUES_BLOCK_JSON_BY_ID, (req.ques_id,))
+            # Check if translation already exists in database
+            cursor.execute(SELECT_QUESTION_TRANSLATE_JSON, (request.question_id,))
+            cached_row = cursor.fetchone()
+            
+            if cached_row and cached_row.get('question_translate_json'):
+                cached_data = cached_row['question_translate_json']
+                # Parse if it's a string, otherwise use as-is
+                if isinstance(cached_data, str):
+                    cached_data = json.loads(cached_data)
+                # Check if the cached data matches the requested language
+                if cached_data.get('language_id') == request.language_id:
+                    return cached_data
+            
+            # If no cached data, proceed with translation
+            cursor.execute(SELECT_QUESTION_BLOCK_JSON_BY_ID, (request.question_id,))
             row = cursor.fetchone()
-            if not row or not row.get('ques_block_json'):
+            if not row or not row.get('question_block_json'):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Question not found"
                 )
-            ques_block_json = row['ques_block_json']
+            question_block_json = row['question_block_json']
 
-            prompt = build_ques_trans_prompt(ques_block_json, req.lang_id)
-            gemini_resp = generate_text_with_gemini(prompt)
-            if not gemini_resp:
+            prompt = build_question_translation_prompt(question_block_json, request.language_id)
+            gemini_response = generate_text_with_gemini(prompt)
+            if not gemini_response:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Failed to get translation from Gemini"
                 )
             
-            resp = json.loads(gemini_resp)            
+            # Clean the response: remove markdown code blocks if present
+            cleaned_response = clean_gemini_response(gemini_response)
+            
+            response = json.loads(cleaned_response)
+            
+            # Update the translation in the database
+            cursor.execute(
+                UPDATE_QUESTION_TRANSLATE_JSON_SCRIPT,
+                (json.dumps(response), request.question_id)
+            )
 
-        return resp
+        return response
     except HTTPException:
         raise
     except Exception as e:
@@ -174,8 +212,67 @@ async def trans_ques(req: GeminiTransQuesReq):
         )
 
 
+@router.post(
+    "/gemini/explain/question",
+    response_model=GeminiExplainQuestionResponse,
+    description="Explain a TOEIC question to the target language using Gemini AI."
+)
+async def explain_question(request: GeminiExplainQuestionRequest):
+    try:
+        with get_db_cursor() as cursor:
+            # Check if explanation already exists in database
+            cursor.execute(SELECT_QUESTION_EXPLAIN_JSON, (request.question_id,))
+            cached_row = cursor.fetchone()
+            
+            if cached_row and cached_row.get('question_explain_json'):
+                cached_data = cached_row['question_explain_json']
+                # Parse if it's a string, otherwise use as-is
+                if isinstance(cached_data, str):
+                    cached_data = json.loads(cached_data)
+                # Check if the cached data matches the requested language
+                if cached_data.get('language_id') == request.language_id:
+                    return cached_data
+            
+            # If no cached data, proceed with explanation generation
+            cursor.execute(SELECT_QUESTION_EXPLAIN_BLOCK_JSON_BY_ID, (request.question_id,))
+            row = cursor.fetchone()
+            if not row or not row.get('question_explain_block_json'):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Question not found"
+                )
+            question_explain_block_json = row['question_explain_block_json']
+
+            prompt = build_question_explain_prompt(question_explain_block_json, request.language_id)
+            gemini_response = generate_text_with_gemini(prompt)
+            if not gemini_response:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to get explanation from Gemini"
+                )
+            
+            # Clean the response: remove markdown code blocks if present
+            cleaned_response = clean_gemini_response(gemini_response)
+            
+            response = json.loads(cleaned_response)
+            
+            # Update the explanation in the database
+            cursor.execute(
+                UPDATE_QUESTION_EXPLAIN_JSON_SCRIPT,
+                (json.dumps(response), request.question_id)
+            )
+
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error in translate question controller: {str(e)}"
+        )
+
 @router.post("/gemini/translate/image", response_model=dict)
-async def translate_image(request: GeminiTransImgReq):
+async def translate_image(request: GeminiTranslateImageRequest):
     try:
         with get_db_cursor() as cursor:
             cursor.execute(SELECT_BASE64_IMAGE_BY_MEDIA_ID, (request.media_id,))
@@ -196,7 +293,7 @@ async def translate_image(request: GeminiTransImgReq):
 
 
 @router.post("/gemini/translate/audio-script", response_model=dict)
-async def translate_audio_script(request: GeminiTransImgReq):
+async def translate_audio_script(request: GeminiTranslateAudioScriptRequest):
     try:
         with get_db_cursor() as cursor:
             cursor.execute(SELECT_AUDIO_SCRIPT_BY_MEDIA_ID, (request.media_id,))
@@ -213,41 +310,4 @@ async def translate_audio_script(request: GeminiTransImgReq):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error in translate audio script controller: {str(e)}"
-        )
-
-
-@router.post(
-    "/gemini/explain/ques",
-    response_model=GeminiExplainQuesResp,
-    description="Explain a TOEIC question to the target language using Gemini AI."
-)
-async def explain_ques(req: GeminiExplainQuesReq):
-    try:
-        with get_db_cursor() as cursor:
-            cursor.execute(SELECT_QUES_EXPLAIN_BLOCK_JSON_BY_ID, (req.ques_id,))
-            row = cursor.fetchone()
-            if not row or not row.get('ques_explain_block_json'):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Question not found"
-                )
-            ques_explain_block_json = row['ques_explain_block_json']
-
-            prompt = build_ques_explain_prompt(ques_explain_block_json, req.lang_id)
-            gemini_resp = generate_text_with_gemini(prompt)
-            if not gemini_resp:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to get translation from Gemini"
-                )
-            
-            resp = json.loads(gemini_resp)            
-
-        return resp
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in translate question controller: {str(e)}"
         )

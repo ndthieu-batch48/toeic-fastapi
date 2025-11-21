@@ -1,24 +1,24 @@
 from typing import Literal
 
 
-LANG_MAP = {
+LANGUAGE_MAP = {
     "vi": "Vietnamese",
     "ja": "Japanese", 
     "en": "English",
 }
 
 
-LangCode = Literal["vi", "ja", "en"]
+LanguageCode = Literal["vi", "ja", "en"]
 
 
-def getLangById(langId):
+def getLanguageById(languageId):
     """
     Get language name by language ID or code.
     
     Args:
-        langId: Language code (str)
+        languageId: Language code (str)
         
     Returns:
         str: Language name, defaults to Vietnamese if not found
     """
-    return LANG_MAP.get(langId, "Vietnamese")
+    return LANGUAGE_MAP.get(languageId, "Vietnamese")
