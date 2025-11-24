@@ -16,7 +16,7 @@ async def send_email_service_async(message: EmailMessage):
             hostname=smtp_config.EMAIL_SMTP_SERVER,
             port=smtp_config.EMAIL_SMTP_PORT,
             use_tls=True,
-            username=smtp_config.EMAIL_SENDER,
+            username=smtp_config.EMAIL_USERNAME,
             password=smtp_config.EMAIL_PASSCODE,
         )
     except Exception as e:
