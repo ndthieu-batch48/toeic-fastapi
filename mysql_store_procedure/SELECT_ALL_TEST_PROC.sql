@@ -16,8 +16,8 @@ BEGIN
             JSON_OBJECT(
                 'test_id', t.id, 
                 'test_title', t.title, 
-                'test_descrip', t.description, 
-                'test_dura', t.duration, 
+                'test_description', t.description, 
+                'test_duration', t.duration, 
                 'part_list', JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'part_id', p.id,

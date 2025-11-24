@@ -13,11 +13,11 @@ async def send_email_service_async(message: EmailMessage):
     try:
         await aiosmtplib.send(
             message,
-            hostname=smtp_config.GMAIL_SMTP_SERVER,
-            port=smtp_config.GMAIL_SMTP_PORT,
-            start_tls=True,
-            username=smtp_config.GMAIL_SENDER,
-            password=smtp_config.GMAIL_PASSWORD,
+            hostname=smtp_config.EMAIL_SMTP_SERVER,
+            port=smtp_config.EMAIL_SMTP_PORT,
+            use_tls=True,
+            username=smtp_config.EMAIL_SENDER,
+            password=smtp_config.EMAIL_PASSCODE,
         )
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -30,7 +30,7 @@ def send_email_sync_wrapper(message: EmailMessage):
 
 
 def build_password_reset_email(to_email: str, otp: str, expiry_minutes: str) -> EmailMessage:
-    sender = smtp_config.GMAIL_SENDER
+    sender = smtp_config.EMAIL_SENDER
     
     msg = EmailMessage()
     msg["From"] = f"TMA English practice <{sender}>"
@@ -50,7 +50,7 @@ def build_verify_email_mail(to_email: str, otp: str, expiry_minutes: str) -> Ema
 
     msg = EmailMessage()
     msg["Subject"] = OTP_VERIFY_SUBJECT
-    msg["From"] = f"TMA English practice <{smtp_config.GMAIL_SENDER}>"
+    msg["From"] = f"TMA English practice <{smtp_config.EMAIL_SENDER}>"
     msg["To"] = to_email
 
     plain_body = OTP_VERIFY_PLAIN.format(otp=otp, expiry_minutes=expiry_minutes)

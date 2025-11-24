@@ -5,26 +5,26 @@ from google import genai
 from google.genai import types
 from .app_config import app_config
 
-# import os, ssl, certifi
+import os, ssl, certifi
 
-# custom_ca = "C:/cert/tma.com.vn/tma.com.vn-full.crt"
+custom_ca = "C:/cert/tma.com.vn/tma.com.vn-full.crt"
 
-# # Create a new PEM bundle at runtime (not stored permanently)
-# ctx = ssl.create_default_context(cafile=certifi.where())
-# ctx.load_verify_locations(cafile=custom_ca)
+# Create a new PEM bundle at runtime (not stored permanently)
+ctx = ssl.create_default_context(cafile=certifi.where())
+ctx.load_verify_locations(cafile=custom_ca)
 
-# # Save the combined context into a temp file so google-genai can see it
-# import tempfile
-# with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as tmp:
-#     # Dump certifi + your CA into one file
-#     with open(certifi.where(), "rb") as f:
-#         tmp.write(f.read())
-#     with open(custom_ca, "rb") as f:
-#         tmp.write(f.read())
-#     tmp_path = tmp.name
+# Save the combined context into a temp file so google-genai can see it
+import tempfile
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as tmp:
+    # Dump certifi + your CA into one file
+    with open(certifi.where(), "rb") as f:
+        tmp.write(f.read())
+    with open(custom_ca, "rb") as f:
+        tmp.write(f.read())
+    tmp_path = tmp.name
 
-# # Point google-genai to that temporary file
-# os.environ["SSL_CERT_FILE"] = tmp_path
+# Point google-genai to that temporary file
+os.environ["SSL_CERT_FILE"] = tmp_path
 
 gemini_client = genai.Client(api_key=app_config.GEMINI_API_KEY)
 
