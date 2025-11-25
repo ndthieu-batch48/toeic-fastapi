@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 class SmtpConfig(BaseSettings):
     EMAIL_SENDER: str = ""
     EMAIL_USERNAME: str = ""
-    EMAIL_PASSCODE: str = ""
+    EMAIL_PASSWORD: str = ""
     EMAIL_SMTP_SERVER: str = "smtp.tma.com.vn"
     EMAIL_SMTP_PORT: int = 465
         

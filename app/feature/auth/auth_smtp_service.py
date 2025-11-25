@@ -5,8 +5,7 @@ from .const.email_const import (
     OTP_VERIFY_HTML, OTP_VERIFY_PLAIN, OTP_VERIFY_SUBJECT,
     PASSWORD_RESET_HTML, PASSWORD_RESET_PLAIN, PASSWORD_RESET_SUBJECT
 )
-from ...core.smtp_config import smtp_config
-
+from ...core.smtp_config import smtp_config 
 
 async def send_email_service_async(message: EmailMessage):
     """Async version of email sending using aiosmtplib"""
@@ -17,7 +16,7 @@ async def send_email_service_async(message: EmailMessage):
             port=smtp_config.EMAIL_SMTP_PORT,
             use_tls=True,
             username=smtp_config.EMAIL_USERNAME,
-            password=smtp_config.EMAIL_PASSCODE,
+            password=smtp_config.EMAIL_PASSWORD, 
         )
     except Exception as e:
         print(f"Failed to send email: {e}")
