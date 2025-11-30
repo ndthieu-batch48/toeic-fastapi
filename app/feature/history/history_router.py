@@ -40,6 +40,10 @@ async def create_submit_history(
         user_id = current_user.get("user_id")
         data_progress_json = json.dumps(request.data_progress)
         part_json = json.dumps(request.part_id_list)
+        
+        # Ensure fallback values of 0 for durations
+        practice_duration = request.practice_duration if request.practice_duration is not None else 0
+        exam_duration = request.exam_duration if request.exam_duration is not None else 0
 
         with get_db_cursor() as cursor:
             # Check existing "save"
@@ -58,7 +62,8 @@ async def create_submit_history(
                         data_progress_json,
                         request.type,
                         part_json,
-                        request.duration,
+                        practice_duration,
+                        exam_duration,
                         request.status,
                         user_id, 
                         request.test_id,
@@ -71,7 +76,8 @@ async def create_submit_history(
                         data_progress_json,
                         request.type,
                         part_json,
-                        request.duration,
+                        practice_duration,
+                        exam_duration,
                         request.test_id,
                         user_id,
                         request.status,
@@ -143,7 +149,8 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                 test_id = history.get("test_id")
                 test_type = history.get("type")
                 create_at = history.get("create_at")
-                duration = history.get("duration")
+                practice_duration = history.get("practice_duration") or 0
+                exam_duration = history.get("exam_duration") or 0
 
                 # Get test info
                 cursor.execute(GET_TITLE_OF_TEST, (test_id,))
@@ -188,7 +195,8 @@ async def get_result_list(current_user: dict = Depends(get_current_user)):
                     "test_id": test_id,
                     "test_type": test_type,
                     "create_at": create_at,
-                    "duration": duration,
+                    "practice_duration": practice_duration,
+                    "exam_duration": exam_duration,
                     "test_name": test_name,
                     "score": score,
                     "part_id_list": part_id_list,
@@ -226,7 +234,8 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             test_id = history.get("test_id")
             test_type = history.get("type")
             create_at = history.get("create_at")
-            duration = history.get("duration")
+            practice_duration = history.get("practice_duration") or 0
+            exam_duration = history.get("exam_duration") or 0
             data_progress = history.get("data_progress")
             
             cursor.execute(GET_TITLE_OF_TEST, (test_id,))
@@ -273,7 +282,8 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             "total_question": total_question,
             "accuracy": round(accuracy, 2),
             "create_at": create_at,
-            "duration": duration,
+            "practice_duration": practice_duration,
+            "exam_duration": exam_duration,
             "data_progress": data_progress,
             "part_id_list": part_id_list,
         }

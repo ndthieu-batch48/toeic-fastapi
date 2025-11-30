@@ -10,7 +10,8 @@ class HistoryResponse(BaseModel):
     data_progress: Json[Dict[str, str]]
     type: TEST_TYPE
     part_id_list: Json[List[str]]              
-    duration: float                         
+    practice_duration: int
+    exam_duration: int
     test_id: int                        
     user_id: int                      
     create_at: datetime 
@@ -21,7 +22,8 @@ class HistoryCreateRequest(BaseModel):
     data_progress: Dict[str, str]
     type: TEST_TYPE
     part_id_list: List[str]
-    duration: float
+    practice_duration: int | None = None
+    exam_duration: int | None = None
     test_id: int
     status: Literal["save", "submit"]
 
@@ -43,7 +45,8 @@ class HistoryResultDetailResponse(BaseModel):
     no_answer: int
     total_question: int
     accuracy: float
-    duration: int
+    practice_duration: int
+    exam_duration: int
     create_at: datetime
     data_progress: Json[Dict[str, str]]
     part_id_list: List[str]
@@ -55,7 +58,8 @@ class HistoryResultListResponse(BaseModel):
     test_id: int 
     test_type: TEST_TYPE
     test_name: str
-    duration: int
+    practice_duration: int
+    exam_duration: int
     part_id_list: List[str]
     part_order_list: List[str]
     create_at: datetime

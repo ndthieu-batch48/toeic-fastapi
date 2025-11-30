@@ -1,8 +1,8 @@
 """History and progress related queries"""
 
 INSERT_HISTORY = """
-    INSERT INTO toeicapp_history (dataprogress, type, part, time, test_id, user_id, create_at, status, time_left)
-    VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, NULL)
+    INSERT INTO toeicapp_history (dataprogress, type, part, practice_duration, exam_duration, test_id, user_id, create_at, status)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s)
 """
 
 UPDATE_HISTORY_BY_USER = """
@@ -10,10 +10,10 @@ UPDATE_HISTORY_BY_USER = """
     SET dataprogress = %s,
         type = %s,
         part = %s,
-        time = %s,
+        practice_duration = %s,
+        exam_duration = %s,
         create_at = NOW(),
-        status = %s,
-        time_left = NULL
+        status = %s
     WHERE user_id = %s AND test_id = %s;
 """
 
@@ -24,7 +24,8 @@ SELECT_HISTORY_BY_STATUS = """
         dataprogress AS data_progress,
         type, 
         part AS part_id_list,
-        time AS duration, 
+        practice_duration, 
+        exam_duration,
         test_id,
         user_id,
         create_at,
@@ -41,7 +42,8 @@ SELECT_SUBMIT_HISTORY_BY_USER = """
         dataprogress AS data_progress,
         type, 
         part AS part_id_list,
-        time AS duration, 
+        practice_duration, 
+        exam_duration,
         test_id,
         user_id,
         create_at,
@@ -60,7 +62,8 @@ SELECT_HISTORY_BY_ID = """
         dataprogress AS data_progress,
         type, 
         part AS part_id_list,
-        time AS duration, 
+        practice_duration, 
+        exam_duration,
         test_id,
         user_id,
         create_at,
