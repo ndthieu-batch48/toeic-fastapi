@@ -33,6 +33,15 @@ class HistoryCreateResponse(BaseModel):
     status: str
     message: str
 
+
+class PartResultDetail(BaseModel):
+    part_order: str
+    total_question: int
+    correct_count: int
+    incorrect_count: int
+    no_answer: int
+
+
 class HistoryResultDetailResponse(BaseModel):
     history_id: int
     test_id: int
@@ -50,6 +59,7 @@ class HistoryResultDetailResponse(BaseModel):
     create_at: datetime
     data_progress: Json[Dict[str, str]]
     part_id_list: List[str]
+    result_by_part: List[PartResultDetail]
 
 
 class HistoryResultListResponse(BaseModel):

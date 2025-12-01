@@ -17,8 +17,9 @@ from app.feature.history.history_query import (
     UPDATE_HISTORY_BY_USER,
     SELECT_HISTORY_BY_ID, 
     SELECT_HISTORY_BY_STATUS,
-    SELECT_CALCULATE_DATA_PROGRESS_RESULT_BY_HISTORY_ID,
+    SELECT_CALCULATE_CORRECT_INCORRECT_FOR_TEST_BY_HISTORY_ID,
     SELECT_CALCULATE_CORRECT_ANSWER_BY_HISTORY_ID,
+    SELECT_CALCULATE_CORRECT_INCORRECT_FOR_EACH_PART_BY_HISTORY_ID,
     SELECT_SUBMIT_HISTORY_BY_USER,
     GET_TITLE_OF_TEST,
     SELECT_COUNT_QUESTIONS_BY_TEST, 
@@ -258,7 +259,7 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
                 total_question = row.get("question_by_multiple_part_count")
 
             # Handle calculating result
-            cursor.execute(SELECT_CALCULATE_DATA_PROGRESS_RESULT_BY_HISTORY_ID, (history_id,))
+            cursor.execute(SELECT_CALCULATE_CORRECT_INCORRECT_FOR_TEST_BY_HISTORY_ID, (history_id,))
             row = cursor.fetchone()
             correct_count = row.get("correct_count")
             incorrect_count = row.get("incorrect_count")
@@ -268,6 +269,20 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             total_answer = incorrect_count + correct_count
             no_answer = total_question - total_answer
             accuracy = (correct_count / total_question) * 100 if total_answer > 0 else 0
+            
+            # Calculate correct answer by part
+            cursor.execute(SELECT_CALCULATE_CORRECT_INCORRECT_FOR_EACH_PART_BY_HISTORY_ID, (history_id,))
+            part_results = cursor.fetchall()
+            result_by_part = [
+                {
+                    "part_order": row.get("part_order"),
+                    "total_question": row.get("total_question"),
+                    "correct_count": row.get("correct_count"),
+                    "incorrect_count": row.get("incorrect_count"),
+                    "no_answer": row.get("total_question") - (row.get("correct_count") + row.get("incorrect_count")),
+                }
+                for row in part_results
+            ]
         
         return {
             "history_id": history_id,
@@ -286,6 +301,7 @@ async def get_result_detail(history_id: int, _: dict = Depends(get_current_user)
             "exam_duration": exam_duration,
             "data_progress": data_progress,
             "part_id_list": part_id_list,
+            "result_by_part": result_by_part,
         }
 
     except HTTPException:

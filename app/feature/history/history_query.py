@@ -76,18 +76,7 @@ SELECT_HISTORY_BY_ID = """
 GET_TITLE_OF_TEST = "SELECT title FROM toeicapp_test WHERE id = %s"
 
 
-def select_count_correct_incorrect_by_answer_id(answer_id_list):
-    placeholders = ", ".join(["%s"] * len(answer_id_list))
-    return f"""
-        SELECT
-            SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS correct_count,
-            SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END) AS incorrect_count
-        FROM toeicapp_answer a
-        WHERE a.id IN ({placeholders});
-    """
-
-
-SELECT_CALCULATE_DATA_PROGRESS_RESULT_BY_HISTORY_ID = """
+SELECT_CALCULATE_CORRECT_INCORRECT_FOR_TEST_BY_HISTORY_ID = """
     SELECT
         COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count,
         COALESCE(SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END), 0) AS incorrect_count,
@@ -122,6 +111,30 @@ SELECT_CALCULATE_CORRECT_ANSWER_BY_HISTORY_ID = """
                     JSON_EXTRACT(h.dataprogress, CONCAT('$."', k.question_id, '"'))
                 )
     WHERE h.id = %s;
+"""
+
+
+SELECT_CALCULATE_CORRECT_INCORRECT_FOR_EACH_PART_BY_HISTORY_ID = """
+    SELECT
+        p.id AS part_id,
+        p.part_order,
+        (SELECT COUNT(q.id) FROM toeicapp_question q WHERE q.part_id = p.id) AS total_question,
+        COALESCE(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END), 0) AS correct_count,
+        COALESCE(SUM(CASE WHEN a.is_correct = 0 THEN 1 ELSE 0 END), 0) AS incorrect_count
+    FROM toeicapp_history h
+    JOIN JSON_TABLE(
+        JSON_KEYS(h.dataprogress),
+        '$[*]' COLUMNS(question_id VARCHAR(64) PATH '$')
+    ) AS k
+    JOIN toeicapp_question q ON q.id = CAST(k.question_id AS UNSIGNED)
+    JOIN toeicapp_part p ON q.part_id = p.id
+    LEFT JOIN toeicapp_answer a 
+        ON a.id = JSON_UNQUOTE(
+                    JSON_EXTRACT(h.dataprogress, CONCAT('$."', k.question_id, '"'))
+                )
+    WHERE h.id = %s
+    GROUP BY p.id, p.part_order
+    ORDER BY p.id;
 """
 
 
