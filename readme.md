@@ -7,21 +7,20 @@ This is a FastAPI-based TOEIC (Test of English for International Communication) 
 
 ### Web Framework & API
 - **FastAPI (0.115.6)** - Modern, fast web framework for building APIs with Python
-  - **Starlette** - ASGI framework underlying FastAPI
-  - **Pydantic** - Data validation and settings management using Python type annotations
+  - **Starlette (0.41.3)** - ASGI framework underlying FastAPI
+  - **Pydantic (2.11.7)** - Data validation and settings management using Python type annotations
+  - **Pydantic-settings (2.10.1)** - Settings management using Pydantic models
   - **Uvicorn (0.34.0)** - ASGI web server for running FastAPI applications
 
 ### Database & Storage
-- **MySQL Connectors**:
-  - **mysql-connector-python (9.3.0)** - Official MySQL driver for Python
-  - **mysqlclient (2.2.7)** - C extension for MySQL connectivity (performance-focused)
-  - **aiomysql (0.2.0)** - Async MySQL client built on PyMySQL
-- **Pillow (11.3.0)** - Python Imaging Library for image processing
+- **mysql-connector-python (9.3.0)** - Official MySQL driver for Python
+- **Pillow (11.3.0)** - Python Imaging Library for image processing and base64 image handling
 
 ### AI & Machine Learning
 - **google-genai (1.24.0)** - Google's Generative AI SDK for integrating with Gemini AI models
   - Includes authentication, HTTP client, and WebSocket support
   - Provides async capabilities for AI operations
+- **google-auth (2.40.3)** - Google authentication library
 
 ### Security & Authentication
 - **bcrypt (4.3.0)** - Password hashing library for secure user authentication
@@ -32,20 +31,19 @@ This is a FastAPI-based TOEIC (Test of English for International Communication) 
 ### HTTP & Networking
 - **aiohttp (3.12.15)** - Async HTTP client/server framework
 - **aiosmtplib (4.0.1)** - Async SMTP client for email functionality
-- **httpx** - Modern HTTP client with async support (via google-genai)
+- **httpcore (1.0.9)** - HTTP client core library
+- **httpx (0.28.1)** - Modern HTTP client with async support
 - **requests (2.32.4)** - Traditional HTTP library for synchronous requests
+- **urllib3 (2.5.0)** - HTTP client library for Python
 
 ### Configuration & Utilities
-- **pydantic-settings (2.10.1)** - Settings management using Pydantic models
-- **python-dotenv** - Load environment variables from .env files
+- **python-dotenv (1.1.1)** - Load environment variables from .env files
 - **email_validator (2.2.0)** - Email validation with DNS checking
-- **tenacity** - Retry library for handling transient failures
+- **tenacity (8.5.0)** - Retry library for handling transient failures
+- **cachetools (5.5.2)** - Caching utilities for API responses
 
-### Development Tools
+### Development & Debugging Tools
 - **pipdeptree (2.28.0)** - Display dependency tree (development utility)
-
-### Database Drivers
-- **mysql-connector-python**: Official driver for standard operations
 
 
 ## Installation Guide
@@ -125,34 +123,151 @@ Once running, access:
 - Production: Use proper ASGI server like Gunicorn with uvicorn workers
 - Database: Consider connection pooling configuration for production loads
 
-# tab API Documentation
+---
 
-## Feature Routers
+## API Documentation
 
-### 1. Authentication Router (`/auth`)
-**File:** `app/features/auth/router.py`
-**Endpoints:**
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login  
-- `POST /auth/refresh-token` - Refresh JWT token
-- `POST /auth/reset-password` - Reset user password
-- `POST /auth/send-reset-password-otp` - Send password reset OTP
-- `POST /auth/verify-reset-password-otp` - Verify password reset OTP
+### Base URL
+```
+http://localhost:8000
+```
 
-### 2. History Router (`/history`) 
-**File:** `app/features/history/router.py`
-**Endpoints:**
-- `POST /history` - Create/save history entry
-- `GET /history/save` - Get saved history
-- `GET /history/result/list` - Get history results list
-- `GET /history/result/detail` - Get detailed history results
+### API Endpoints Overview
 
-### 3. Test Router (`/tests`)
-**File:** `app/features/test/router.py`  
-**Endpoints:**
-- `POST /tests/gemini/health` - Check Gemini service health
-- `GET /tests/all` - Get all tests
-- `GET /tests/{id}` - Get specific test by ID
-- `GET /tests/{id}/parts/{part_id}/detail` - Get test part details
-- `POST /tests/gemini/translate/question` - Translate questions using Gemini
-- `POST /tests/gemini/translate/image` - Translate images using Gemini
+#### 1. Authentication Endpoints (`/auth`)
+
+| Method | Endpoint                    | Description                                  |
+| ------ | --------------------------- | -------------------------------------------- |
+| `POST` | `/auth/register`            | Register a new user                          |
+| `POST` | `/auth/login`               | User login with email/username and password  |
+| `POST` | `/auth/refresh-token`       | Refresh JWT access token using refresh token |
+| `POST` | `/auth/password/otp`        | Request OTP for password reset               |
+| `POST` | `/auth/password/otp/verify` | Verify OTP and get reset password token      |
+| `PUT`  | `/auth/password/reset`      | Reset password using verified token          |
+
+**Key Features:**
+- JWT token-based authentication
+- Password hashing with bcrypt
+- OTP-based password reset via email
+- Access token and refresh token mechanism
+
+---
+
+#### 2. History Endpoints (`/histories`)
+
+| Method | Endpoint                   | Description                                     |
+| ------ | -------------------------- | ----------------------------------------------- |
+| `POST` | `/histories`               | Create or update test attempt history           |
+| `GET`  | `/histories/save`          | Get saved progress history (for current test)   |
+| `GET`  | `/histories/result/list`   | Get list of all submitted test results          |
+| `GET`  | `/histories/result/detail` | Get detailed analysis of a specific test result |
+
+**Query Parameters:**
+- `test_id` (integer): Required for `/histories/save` endpoint
+- `history_id` (integer): Required for `/histories/result/detail` endpoint
+
+**Response Includes:**
+- Test scores and accuracy
+- Question breakdown by part
+- Correct/incorrect/no answer counts
+- Time duration for practice and exam modes
+
+---
+
+#### 3. Test Endpoints (`/tests`)
+
+| Method | Endpoint                                       | Description                                                |
+| ------ | ---------------------------------------------- | ---------------------------------------------------------- |
+| `GET`  | `/tests`                                       | Get all available TOEIC tests                              |
+| `GET`  | `/tests/{id}`                                  | Get detailed test information with all parts and questions |
+| `GET`  | `/tests/{test_id}/part/{part_id}/audio/url`    | Get audio streaming URL for a part                         |
+| `GET`  | `/tests/{test_id}/part/{part_id}/audio/stream` | Stream audio file for a test part                          |
+| `POST` | `/tests/gemini/translate/question`             | Translate a question using Gemini AI                       |
+| `POST` | `/tests/gemini/explain/question`               | Get AI explanation for a question                          |
+| `POST` | `/tests/gemini/translate/image`                | Get base64 image data for a media                          |
+| `POST` | `/tests/gemini/translate/audio-script`         | Get English transcript of audio                            |
+
+**Request/Response Examples:**
+
+**Translate Question Request:**
+```json
+{
+  "question_id": 1,
+  "language_id": "vi"
+}
+```
+
+**Explain Question Request:**
+```json
+{
+  "question_id": 1,
+  "language_id": "vi"
+}
+```
+
+**Translate Image Request:**
+```json
+{
+  "media_id": 1
+}
+```
+
+**Translate Audio Script Request:**
+```json
+{
+  "media_id": 1
+}
+```
+
+---
+
+### Authentication
+
+**Protected Endpoints:**
+- All `/histories` endpoints require authentication via JWT bearer token
+- TODO: Add authentication dependency for `/tests` endpoints
+
+**How to Authenticate:**
+1. Register or login to get `access_token`
+2. Include token in request header:
+   ```
+   Authorization: Bearer {access_token}
+   ```
+
+---
+
+### Response Format
+
+**Success Response:**
+```json
+{
+  "status": 200,
+  "data": {...},
+  "message": "Operation successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "detail": {
+    "message": "Error description",
+    "error": "Detailed error message"
+  }
+}
+```
+
+---
+
+### Interactive API Documentation
+
+Once the application is running, you can explore the API interactively:
+
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+These tools allow you to:
+- View all available endpoints
+- See request/response schemas
+- Test endpoints directly from the browser
+- View detailed error messages

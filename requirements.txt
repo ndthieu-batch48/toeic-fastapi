@@ -28,7 +28,6 @@ multidict==6.6.3
 mysql-connector-python==9.3.0
 packaging==25.0
 passlib==1.7.4
-pillow==11.3.0
 pipdeptree==2.28.0
 propcache==0.3.2
 pyasn1==0.6.1
